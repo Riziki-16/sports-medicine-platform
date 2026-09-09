@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Medicine Platform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <nav>
+    <a href="#">HOME</a>
+    <a href="#" class="active">SEARCH</a>
+    <a href="#">HELP</a>
+    <a href="#">FAQS</a>
+</nav>
+    <h1>Sports Medicine Platform</h1>
+
+<h2>Search Form</h2>
+
+<form id="searchForm">
+
+    <label for="userType">User Type:</label>
+
+<select id="userType" name="userType">
+    <option value="athlete">Athlete</option>
+</select>
+<label for="sport">Sport:</label>
+
+<select id="sport" name="sport">
+    <option value="track-field">Track & Field</option>
+</select>
+<label for="country">Nation of Purchase:</label>
+
+<select id="country" name="country">
+    <option value="united-kingdom">United Kingdom</option>
+</select>
+<label for="search">Search for:</label>
+
+<input type="text" id="search" name="search" placeholder="Enter medicine or substance">
+<button type="submit">Search</button>
+
+</form>
+<h2>Search Results</h2>
+
+<div id="results">
+    <p><strong>Total Results:</strong> 0</p>
+    <p><strong>Ingredient:</strong> —</p>
+    <p><strong>Other Names:</strong> —</p>
+</div>
+
+<script src="script.js"></script>
+
+
+</body>
+</html>
