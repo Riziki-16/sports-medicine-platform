@@ -3,55 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sports Medicine Platform</title>
+    <title>AKILI MED CHECK PLATFORM</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
     <nav>
-    <a href="#">HOME</a>
-    <a href="#" class="active">SEARCH</a>
-    <a href="#">HELP</a>
-    <a href="#">FAQS</a>
-</nav>
-    <h1>Sports Medicine Platform</h1>
+        <a href="#">HOME</a>
+        <a href="#" class="active">SEARCH</a>
+        <a href="#">HELP</a>
+        <a href="#">FAQS</a>
+    </nav>
 
-<h2>Search Form</h2>
+    <h1>AKILI MED CHECK PLATFORM</h1>
 
-<form id="searchForm">
+    <h2>Search Form</h2>
 
-    <label for="userType">User Type:</label>
+    <form id="searchForm">
 
-<select id="userType" name="userType">
-    <option value="athlete">Athlete</option>
-</select>
-<label for="sport">Sport:</label>
+        <label for="userType">User Type:</label>
 
-<select id="sport" name="sport">
-    <option value="track-field">Track & Field</option>
-</select>
-<label for="country">Nation of Purchase:</label>
+        <select id="userType" name="userType">
+            <option value="athlete">Athlete</option>
+        </select>
 
-<select id="country" name="country">
-    <option value="united-kingdom">United Kingdom</option>
-</select>
-<label for="search">Search for:</label>
+        <label for="sport">Sport:</label>
 
-<input type="text" id="search" name="search" placeholder="Enter medicine or substance">
-<button type="submit">Search</button>
+        <select id="sport" name="sport">
+            <option value="Track & Field">Track & Field</option>
+        </select>
 
-</form>
-<h2>Search Results</h2>
+        <label for="country">Nation of Purchase:</label>
 
-<div id="results">
-    <p><strong>Total Results:</strong> 0</p>
-    <p><strong>Ingredient:</strong> —</p>
-    <p><strong>Other Names:</strong> —</p>
-</div>
+        <select id="country" name="country">
+            <option value="Australia">Australia</option>
+            <option value="Canada">Canada</option>
+            <option value="China">China</option>
+            <option value="France">France</option>
+            <option value="Germany">Germany</option>
+            <option value="Ghana">Ghana</option>
+            <option value="India">India</option>
+            <option value="Japan">Japan</option>
+            <option value="Kenya">Kenya</option>
+            <option value="Nigeria">Nigeria</option>
+            <option value="Rwanda">Rwanda</option>
+            <option value="South Africa">South Africa</option>
+            <option value="Tanzania">Tanzania</option>
+            <option value="Uganda">Uganda</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="United States">United States</option>
+        </select>
 
-<script src="script.js"></script>
+        <label for="search">Medicine/Substance:</label>
 
+        <input
+            type="text"
+            id="search"
+            name="search"
+            placeholder="Enter medicine or substance"
+            list="medicineNames"
+        >
+
+        <datalist id="medicineNames">
+
+            <option value="Paracetamol">
+            <option value="Ibuprofen">
+
+            <option value="1-Androstenediol">
+            <option value="1-Androstenedione">
+            <option value="1-Androsterone">
+            <option value="1-Epiandrosterone">
+            <option value="1-Testosterone">
+            <option value="4-Androstenediol">
+            <option value="4-Hydroxytestosterone">
+            <option value="5-Androstenedione">
+            <option value="7α-hydroxy-DHEA">
+            <option value="7β-hydroxy-DHEA">
+            <option value="7-Keto-DHEA">
+            <option value="17α-methylepithiostanol">
+            <option value="19-Norandrostenediol">
+            <option value="19-Norandrostenedione">
+            <option value="Androstanolone">
+            <option value="Androstenediol">
+            <option value="Androstenedione">
+            <option value="Bolasterone">
+            <option value="Boldenone">
+            <option value="Boldione">
+            <option value="Calusterone">
+            <option value="Clostebol">
+
+        </datalist>
+
+        <button type="submit">Search</button>
+
+    </form>
+
+    <h2>Search Results</h2>
+
+    <div id="results">
+        <p><strong>Total Results:</strong> 0</p>
+        <p><strong>Ingredient:</strong> —</p>
+        <p><strong>Other Names:</strong> —</p>
+        <p><strong>Status:</strong> —</p>
+    </div>
+
+    <script src="script.js"></script>
 
 </body>
 </html>
