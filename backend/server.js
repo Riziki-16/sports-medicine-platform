@@ -85,7 +85,7 @@ db.getConnection()
                 ON r.country_id = c.country_id
             WHERE (
     m.medicine_name = ?
-    OR s.chemical_name = ?
+    OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
     OR sn.other_name = ?
 )
             GROUP BY
