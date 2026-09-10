@@ -20,5 +20,6 @@ form.addEventListener("submit", async function(event) {
         <p><strong>Total Results:</strong> ${data.totalResults}</p>
         <p><strong>Ingredient:</strong> ${data.results[0]?.ingredient || "—"}</p>
         <p><strong>Other Names:</strong> ${data.results[0]?.other_names || "—"}</p>
+        <p><strong>Dosage:</strong> ${data.results[0]?.dosage || "—"}</p>
     `;
 });

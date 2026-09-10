@@ -50,35 +50,52 @@ db.getConnection()
     try {
         const [results] = await db.query(`
             SELECT
-                m.medicine_name AS search_for,
-                s.chemical_name AS ingredient,
+                COALESCE(m.medicine_name, s.chemical_name) AS search_for,
+                TRIM(s.chemical_name) AS ingredient,
                 GROUP_CONCAT(DISTINCT sn.other_name SEPARATOR ', ') AS other_names,
                 sp.sports_name AS sport,
                 c.country_name AS country,
-                r.status AS status
-            FROM medicines m
-            JOIN medicine_substances ms
-                ON m.medicine_id = ms.medicine_id
-            JOIN substances s
-                ON ms.substance_id = s.substance_id
+                r.status AS status,
+                d.dosage_information AS dosage
+            FROM substances s
+            LEFT JOIN medicine_substances ms
+                ON s.substance_id = ms.substance_id
+            LEFT JOIN medicines m
+                ON ms.medicine_id = m.medicine_id
+
             LEFT JOIN substance_names sn
                 ON s.substance_id = sn.substance_id
-            JOIN restriction_rules r
+            LEFT JOIN dosages d
+                ON s.substance_id = d.substance_id
+            LEFT JOIN restriction_rules r
                 ON s.substance_id = r.substance_id
-            JOIN sports sp
+                AND r.sports_id = (
+             SELECT sports_id
+             FROM sports
+             WHERE sports_name = ?
+    )
+               AND r.country_id = (
+            SELECT country_id
+            FROM countries
+            WHERE country_name = ?
+    )
+            LEFT JOIN sports sp
                 ON r.sports_id = sp.sports_id
-            JOIN countries c
+            LEFT JOIN countries c
                 ON r.country_id = c.country_id
-            WHERE m.medicine_name = ?
-              AND sp.sports_name = ?
-              AND c.country_name = ?
+            WHERE (
+    m.medicine_name = ?
+    OR s.chemical_name = ?
+    OR sn.other_name = ?
+)
             GROUP BY
                 m.medicine_id,
                 s.substance_id,
                 sp.sports_id,
                 c.country_id,
-                r.status
-        `, [medicine, sport, country]);
+                r.status,
+                d.dosage_information
+        `, [sport, country, medicine, medicine, medicine]);
 
        res.json({
     totalResults: results.length,
