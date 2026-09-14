@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Sport Kenya</title>
+    <link rel="stylesheet" href="detail.css">
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html">HOME</a>
+        <a href="index.html">SEARCH</a>
+        <a href="#">HELP</a>
+        <a href="#">FAQS</a>
+    </nav>
+
+    <main class="details-container">
+
+        <section class="medicine-header">
+
+            <h1 id="medicineName"></h1>
+
+            <div class="other-names">
+                <p>Other Names</p>
+                <span id="otherNames">—</span>
+            </div>
+
+        </section>
+
+        <section class="status-section">
+
+            <h2>STATUS ACCORDING TO THE WADA PROHIBITED LIST</h2>
+
+            <div class="status-cards">
+
+                <div class="status-card">
+                    <div class="status-icon">✓</div>
+                    <h3>In Competition</h3>
+                    <p id="inCompetitionStatus">—</p>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-icon">✓</div>
+                    <h3>Out of Competition</h3>
+                    <p id="outCompetitionStatus">—</p>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="information-section">
+
+            <h2>Medicine Information</h2>
+
+            <div class="information-card">
+
+                <div class="information-row">
+                    <span>Ingredient</span>
+                    <strong id="ingredient">—</strong>
+                </div>
+
+                <div class="information-row">
+                    <span>Sport</span>
+                    <strong id="sport">—</strong>
+                </div>
+
+                <div class="information-row">
+                    <span>Nation of Purchase</span>
+                    <strong id="country">—</strong>
+                </div>
+
+                <div class="information-row">
+                    <span>Dosage</span>
+                    <strong id="dosage">—</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="warning-section">
+
+            <h2>Conditions / Warnings</h2>
+
+            <div class="warning-card">
+                <p id="warnings">—</p>
+            </div>
+
+        </section>
+
+        <button class="back-button" onclick="window.location.href='index.html'">
+            Back to Search
+        </button>
+
+    </main>
+
+    <script src="details.js"></script>
+
+</body>
+</html>
