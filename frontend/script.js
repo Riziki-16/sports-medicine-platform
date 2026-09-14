@@ -1,5 +1,6 @@
 const form = document.getElementById("searchForm");
 const search = document.getElementById("search");
+const userType = document.getElementById("userType");
 const results = document.getElementById("results");
 
 form.addEventListener("submit", async function(event) {
@@ -7,11 +8,13 @@ form.addEventListener("submit", async function(event) {
 
     const medicine = search.value.trim();
 
+    const userTypeValue = userType.value;
+
     const sport = "Track & Field";
-    const country = "United Kingdom";
+    const country = document.getElementById("country").value;
 
     const response = await fetch(
-        `http://localhost:3000/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}`
+        `http://localhost:3000/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
     );
 
     const data = await response.json();

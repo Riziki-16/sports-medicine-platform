@@ -40,6 +40,7 @@ db.getConnection()
     const medicine = req.query.medicine;
     const sport = req.query.sport;
     const country = req.query.country;
+    console.log({ medicine, sport, country });
 
     if (!medicine || !sport || !country) {
     return res.status(400).json({
@@ -65,6 +66,8 @@ db.getConnection()
 
             LEFT JOIN substance_names sn
                 ON s.substance_id = sn.substance_id
+            LEFT JOIN brands b
+                ON s.substance_id = b.substance_id
             LEFT JOIN dosages d
                 ON s.substance_id = d.substance_id
             LEFT JOIN restriction_rules r
@@ -86,7 +89,8 @@ db.getConnection()
             WHERE (
     m.medicine_name = ?
     OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
-    OR sn.other_name = ?
+   OR sn.other_name = ?
+   OR b.brand_name LIKE CONCAT('%', ?, '%')
 )
             GROUP BY
                 m.medicine_id,
@@ -95,7 +99,7 @@ db.getConnection()
                 c.country_id,
                 r.status,
                 d.dosage_information
-        `, [sport, country, medicine, medicine, medicine]);
+        `, [sport, country, medicine, medicine, medicine, medicine]);
 
        res.json({
     totalResults: results.length,
