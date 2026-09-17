@@ -13,8 +13,8 @@ form.addEventListener("submit", async (event) => {
     const country = document.getElementById("country").value;
 
     const response = await fetch(
-        `http://localhost:3000/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
-    );
+    `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userType)}`
+)
 
     const data = await response.json();
 

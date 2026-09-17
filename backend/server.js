@@ -23,18 +23,19 @@ app.get("/", function (req, res) {
     res.send("Sports Medicine API is running!");
 });
 
-db.getConnection()
-    .then(function (connection) {
-        console.log("MySQL database connected!");
-        connection.release();
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
-        app.listen(PORT, function () {
-            console.log(`Server is running on http://localhost:${PORT}`);
-        });
-    })
-    .catch(function (error) {
-        console.error("Database connection failed:", error.message);
-    });
+db.getConnection()
+  .then(connection => {
+    console.log("MySQL database connected!");
+    connection.release();
+  })
+  .catch(error => {
+    console.error("Database connection failed:", error);
+  });
+
     app.get("/search", async function (req, res) {
 
     const medicine = req.query.medicine;
