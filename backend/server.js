@@ -33,7 +33,7 @@ db.getConnection()
         });
     })
     .catch(function (error) {
-        console.error("Database connection failed:", error.message);
+       console.error("Database connection failed:", error);
     });
     app.get("/search", async function (req, res) {
 
