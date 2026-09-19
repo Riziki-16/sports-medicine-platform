@@ -1,5 +1,4 @@
 function setSearchDate() {
-
     const now = new Date();
 
     const searchDate = new Intl.DateTimeFormat("en-GB", {
@@ -24,12 +23,8 @@ const search = document.getElementById("search");
 const userTypeSelect = document.getElementById("userType");
 const results = document.getElementById("results");
 
-
-
 form.addEventListener("submit", async (event) => {
-
     event.preventDefault();
-
 
     const medicine = search.value.trim();
     const selectedUserType = userTypeSelect.value;
@@ -44,31 +39,24 @@ form.addEventListener("submit", async (event) => {
 
     const firstResult = data.results[0];
 
-
     const ingredient = firstResult?.ingredient || "—";
     const otherNames = firstResult?.other_names || "—";
     const status = firstResult?.status || "—";
     const dosage = firstResult?.dosage || "—";
 
-
     let ingredientDisplay;
 
     if (ingredient !== "—") {
-
         ingredientDisplay = `
             <a href="detail.html?ingredient=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}">
                 ${ingredient}
             </a>
         `;
-
     } else {
-
         ingredientDisplay = "—";
     }
 
-
     results.innerHTML = `
-
         <p>
             <strong>Total Results:</strong>
             ${data.totalResults}
@@ -93,7 +81,5 @@ form.addEventListener("submit", async (event) => {
             <strong>Dosage:</strong>
             ${dosage}
         </p>
-
     `;
-
 });
