@@ -45,7 +45,6 @@ nav a:hover {
     padding-bottom: 30px;
 }
 
-
 .medicine-header {
     background: rgba(10, 25, 30, 0.92);
     padding: 25px;
@@ -67,19 +66,20 @@ nav a:hover {
     color: white;
 }
 
+
 #otherNames {
     color: #dddddd;
 }
+
 .status-section {
     margin-top: 30px;
     margin-bottom: 30px;
     background: rgba(10, 25, 30, 0.88);
     padding: 30px;
     border-radius: 18px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.03);
+    box-shadow:0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
-   
 
 .status-section h2 {
     text-align: center;
@@ -96,7 +96,6 @@ nav a:hover {
     flex-wrap: wrap;
 }
 
-
 .status-card {
     width: 300px;
     min-height: 180px;
@@ -107,6 +106,12 @@ nav a:hover {
     border: 3px solid #ccc;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     color: #222;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.30);
 }
 
 
@@ -121,6 +126,7 @@ nav a:hover {
     font-size: 27px;
     font-weight: bold;
 }
+
 
 .status-card.green {
     border-color: #198754;
@@ -148,19 +154,31 @@ nav a:hover {
     color: #c48600;
 }
 
-
 .status-card.red {
     border-color: #dc3545;
 }
 
 .status-card.red .status-icon {
     background: #dc3545;
-
     color: white;
 }
 
 .status-card.red p {
     color: #dc3545;
+}
+
+
+.status-card.grey {
+    border-color: #999;
+}
+
+.status-card.grey .status-icon {
+    background: #999;
+    color: white;
+}
+
+.status-card.grey p {
+    color: #777;
 }
 
 .status-card h3 {
@@ -175,62 +193,20 @@ nav a:hover {
     color: #222;
 }
 
-.information-section {
-    margin-top: 30px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-}
-
-.information-section h2 {
-    margin-bottom: 15px;
-    color: #00a651;
-    font-size: 27px;
-    text-shadow: 1px 1px 3px black;
-}
-
-
-.information-card {
-    background: rgba(255, 255, 255, 0.94);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-    color: #222;
-
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-}
-
-.information-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    padding: 14px 12px;
-    min-height: 65px;
-    border-bottom: 1px solid #ddd;
-}
-
-.information-row:nth-child(odd) {
-    border-right: 1px solid #ddd;
-}
-
-.information-row span {
-    font-weight: bold;
-    color: #444;
-}
-
-.information-row strong {
-    text-align: right;
-    color: #222;
-}
 .warning-section {
     margin-top: 30px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    margin-bottom: 30px;
+    background: rgba(10, 25, 30, 0.88);
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .warning-section h2 {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     color: #00a651;
+    font-size: 27px;
     text-shadow: 1px 1px 3px black;
 }
 
@@ -238,9 +214,30 @@ nav a:hover {
     background: rgba(255, 255, 255, 0.96);
     border-left: 5px solid #f0ad00;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.20);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     color: #333;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+}
+
+.information-section {
+
+    margin-top: 30px;
+    margin-bottom: 30px;
+    background: rgba(10, 25, 30, 0.88);
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.information-section h2 {
+    margin-bottom: 20px;
+    color: #00a651;
+    font-size: 27px;
+    text-shadow: 1px 1px 3px black;
 }
 
 .back-button {
@@ -259,10 +256,11 @@ nav a:hover {
 .back-button:hover {
     background: #004d2c;
 }
+
+
 footer {
     position: relative;
     z-index: 1;
-
     width: 100%;
     margin-top: 25px;
     padding: 12px 20px;
@@ -273,13 +271,10 @@ footer {
     font-size: 12px;
 }
 
-
-
 @media (max-width: 650px) {
 
     nav {
         gap: 15px;
-
         padding: 15px;
     }
 
@@ -289,9 +284,9 @@ footer {
 
     .details-container {
         width: 94%;
-
         margin-top: 20px;
     }
+
 
     .medicine-header {
         padding: 20px;
@@ -305,15 +300,22 @@ footer {
         width: 100%;
     }
 
+    .information-card {
+        grid-template-columns: 1fr;
+    }
+
     .information-row {
         flex-direction: column;
-
         align-items: flex-start;
-
         gap: 5px;
     }
 
     .information-row strong {
         text-align: left;
+    }
+
+    .information-row:nth-child(odd) {
+
+        border-right: none;
     }
 }

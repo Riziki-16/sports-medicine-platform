@@ -1,3 +1,27 @@
+// AUTOMATIC SEARCH DATE AND TIME
+
+function setSearchDate() {
+
+    const now = new Date();
+
+    const searchDate = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Africa/Nairobi",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        timeZoneName: "longOffset"
+    }).format(now);
+
+    document.getElementById("searchDate").textContent = searchDate;
+}
+
+
+// Run automatically when the page loads
+setSearchDate();
 const form = document.getElementById("searchForm");
 const search = document.getElementById("search");
 const userType = document.getElementById("userType");
@@ -32,20 +56,15 @@ form.addEventListener("submit", async (event) => {
 
     let ingredientDisplay;
 
-
     if (ingredient !== "—") {
 
-        
         ingredientDisplay =
             `<a href="detail.html?ingredient=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}">${ingredient}</a>`;
 
     } else {
 
-    
         ingredientDisplay = "—";
     }
-
-
 
     results.innerHTML = `
         <p><strong>Total Results:</strong> ${data.totalResults}</p>

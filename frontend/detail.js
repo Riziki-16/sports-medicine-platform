@@ -1,19 +1,36 @@
+const params = new URLSearchParams(window.location.search);
+
+const ingredient = params.get("medicine") || "";
+const sport = params.get("sport") || "";
+const country = params.get("country") || "";
+
+
 if (ingredient) {
 
-    // Show information already received from the search page
+    // Show information received from the search page
     document.getElementById("medicineName").textContent = ingredient;
-    document.getElementById("ingredient").textContent = ingredient;
-    document.getElementById("sport").textContent = sport || "—";
-    document.getElementById("country").textContent = country || "—";
 
-    // Getting the full medicine information from the backend
+    document.getElementById("ingredient").textContent =
+        ingredient || "—";
+
+    document.getElementById("sport").textContent =
+        sport || "—";
+
+    document.getElementById("country").textContent =
+        country || "—";
+
+
+
     fetch(
-        `http://localhost:3000/search?medicine=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport || "")}&country=${encodeURIComponent(country || "")}`
+        `http://localhost:3000/search?medicine=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}`
     )
+
     .then(response => response.json())
+
     .then(data => {
 
         console.log("Detail API response:", data);
+
 
         if (data.results && data.results.length > 0) {
 
@@ -21,25 +38,41 @@ if (ingredient) {
 
             console.log("Medicine data:", medicine);
 
+
+            // Medicine name
+            document.getElementById("medicineName").textContent =
+                medicine.ingredient || ingredient || "—";
+
+
+            // Other names
             document.getElementById("otherNames").textContent =
                 medicine.other_names || "—";
 
+
+            // Ingredient
             document.getElementById("ingredient").textContent =
                 medicine.ingredient || ingredient || "—";
 
+
+            // Sport
             document.getElementById("sport").textContent =
                 medicine.sport || sport || "—";
 
+
+            // Country
             document.getElementById("country").textContent =
                 medicine.country || country || "—";
 
+
+            // Dosage
             document.getElementById("dosage").textContent =
                 medicine.dosage || "—";
-            
 
+
+            // Warnings
             document.getElementById("warnings").textContent =
                 medicine.warnings || "—";
- 
+
 
             const inCompetitionStatus =
                 medicine.in_competition ||
@@ -49,7 +82,6 @@ if (ingredient) {
                 medicine.status ||
                 "—";
 
-
             const outCompetitionStatus =
                 medicine.out_of_competition ||
                 medicine.outOfCompetition ||
@@ -57,11 +89,14 @@ if (ingredient) {
                 medicine.outOfCompetitionStatus ||
                 medicine.status ||
                 "—";
-s
+
+
+            
             displayStatus(
                 "inCompetitionStatus",
                 inCompetitionStatus
             );
+
 
             displayStatus(
                 "outCompetitionStatus",
@@ -69,55 +104,151 @@ s
             );
 
 
-        } else {
+        }
 
+
+        else {
 
             document.getElementById("otherNames").textContent = "—";
+
             document.getElementById("dosage").textContent = "—";
+
             document.getElementById("warnings").textContent = "—";
-            displayStatus("inCompetitionStatus", "—");
-            displayStatus("outCompetitionStatus", "—");
+
+
+            displayStatus(
+                "inCompetitionStatus",
+                "—"
+            );
+
+
+            displayStatus(
+                "outCompetitionStatus",
+                "—"
+            );
         }
 
     })
+
+
     .catch(error => {
 
-        console.error("Error loading medicine:", error);
+        console.error(
+            "Error loading medicine:",
+            error
+        );
 
-        displayStatus("inCompetitionStatus", "—");
-        displayStatus("outCompetitionStatus", "—");
+
+        document.getElementById("otherNames").textContent = "—";
+
+        document.getElementById("dosage").textContent = "—";
+
+        document.getElementById("warnings").textContent = "—";
+
+
+        displayStatus(
+            "inCompetitionStatus",
+            "—"
+        );
+
+
+        displayStatus(
+            "outCompetitionStatus",
+            "—"
+        );
+
     });
 
-} else {
-
-    document.getElementById("medicineName").textContent =
-        "No medicine selected";
 }
 
 
-// FUNCTION TO DISPLAY GREEN / AMBER / RED STATUS
+else {
+
+    document.getElementById("medicineName").textContent =
+        "No medicine selected";
+
+
+    document.getElementById("otherNames").textContent =
+        "—";
+
+
+    document.getElementById("ingredient").textContent =
+        "—";
+
+
+    document.getElementById("sport").textContent =
+        "—";
+
+
+    document.getElementById("country").textContent =
+        "—";
+
+
+    document.getElementById("dosage").textContent =
+        "—";
+
+
+    document.getElementById("warnings").textContent =
+        "—";
+
+
+    displayStatus(
+        "inCompetitionStatus",
+        "—"
+    );
+
+
+    displayStatus(
+        "outCompetitionStatus",
+        "—"
+    );
+}
+
 
 
 function displayStatus(elementId, status) {
 
-    const element = document.getElementById(elementId);
+    const element =
+        document.getElementById(elementId);
 
+
+    // If the element does not exist
     if (!element) {
         return;
     }
 
-    const card = element.closest(".status-card");
-    const icon = card.querySelector(".status-icon");
 
-    // Remove previous colour
-    card.classList.remove("green", "amber", "red");
+    const card =
+        element.closest(".status-card");
 
-    const cleanStatus = String(status)
-        .trim()
-        .toLowerCase();
 
-    // GREEN - ALLOWED
-    
+    if (!card) {
+        return;
+    }
+
+
+    const icon =
+        card.querySelector(".status-icon");
+
+
+    // Remove previous colours
+    card.classList.remove(
+        "green",
+        "amber",
+        "red",
+        "grey"
+    );
+
+
+    // Clean the status text
+    const cleanStatus =
+        String(status || "")
+            .trim()
+            .toLowerCase();
+
+
+    //Shows green if allowed, not prohibited, or permitted
+
     if (
         cleanStatus === "green" ||
         cleanStatus === "allowed" ||
@@ -126,12 +257,17 @@ function displayStatus(elementId, status) {
     ) {
 
         card.classList.add("green");
-        element.textContent = "Allowed";
-        icon.textContent = "✓";
+
+        element.textContent =
+            "Allowed";
+
+        icon.textContent =
+            "✓";
     }
 
-    // AMBER - CONDITIONAL
-   
+
+    //Shows amber if conditional, restricted, or allowed with conditions
+
     else if (
         cleanStatus === "amber" ||
         cleanStatus === "conditional" ||
@@ -141,13 +277,16 @@ function displayStatus(elementId, status) {
     ) {
 
         card.classList.add("amber");
-        element.textContent = "Allowed with Conditions";
-        icon.textContent = "!";
+
+        element.textContent =
+            "Allowed with Conditions";
+
+        icon.textContent =
+            "!";
     }
 
-    // RED - PROHIBITED
 
-
+    // Shows red if prohibited, banned, or not allowed
     else if (
         cleanStatus === "red" ||
         cleanStatus === "prohibited" ||
@@ -157,16 +296,24 @@ function displayStatus(elementId, status) {
 
         card.classList.add("red");
 
-        element.textContent = "Not Allowed";
+        element.textContent =
+            "Not Allowed";
 
-        icon.textContent = "✕";
+        icon.textContent =
+            "✕";
     }
 
-    // UNKNOWN
+    // shows grey color if the status is unknown or not provided
+    
+
     else {
 
-        element.textContent = "—";
+        card.classList.add("grey");
 
-        icon.textContent = "?";
+        element.textContent =
+            "No Information";
+
+        icon.textContent =
+            "—";
     }
 }
