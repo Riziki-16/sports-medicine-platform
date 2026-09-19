@@ -42,50 +42,59 @@ function getSearchDate() {
 }
 
 
-function setStatus(card, icon, textElement, status) {
-    card.classList.remove(
-        "safe",
-        "warning",
-        "prohibited",
-        "unknown"
-    );
+function displayStatus(elementId, status) {
 
-    const value = String(status || "").toLowerCase();
+    const element = document.getElementById(elementId);
+    const card = element.closest(".status-card");
+    const icon = card.querySelector(".status-icon");
 
-    textElement.textContent = status || "—";
+    card.classList.remove("green", "amber", "red");
+
+    const cleanStatus = String(status).trim().toLowerCase();
 
     if (
-        value.includes("prohibited") ||
-        value.includes("banned") ||
-        value.includes("not allowed")
+        cleanStatus === "green" ||
+        cleanStatus === "allowed" ||
+        cleanStatus === "not prohibited"
     ) {
-        card.classList.add("prohibited");
-        icon.textContent = "✕";
-    } else if (
-        value.includes("warning") ||
-        value.includes("caution") ||
-        value.includes("conditional")
-    ) {
-        card.classList.add("warning");
-        icon.textContent = "!";
-    } else if (
-        value.includes("allowed") ||
-        value.includes("permitted") ||
-        value.includes("not prohibited")
-    ) {
-        card.classList.add("safe");
+
+        card.classList.add("green");
+        element.textContent = "Not Prohibited";
         icon.textContent = "✓";
+
+    } else if (
+        cleanStatus === "amber" ||
+        cleanStatus === "conditional" ||
+        cleanStatus === "allowed with conditions"
+    ) {
+
+        card.classList.add("amber");
+        element.textContent = "Allowed with Conditions";
+        icon.textContent = "!";
+
+    } else if (
+        cleanStatus === "red" ||
+        cleanStatus === "prohibited"
+    ) {
+
+        card.classList.add("red");
+        element.textContent = "Prohibited";
+        icon.textContent = "✕";
+
     } else {
-        card.classList.add("unknown");
+
+        element.textContent = "—";
         icon.textContent = "?";
     }
 }
 
 
 async function loadMedicineDetails() {
+
     if (!ingredientParam) {
         medicineName.textContent = "Medicine Not Found";
         warnings.textContent = "No medicine was selected.";
+        searchDate.textContent = getSearchDate();
         return;
     }
 
@@ -96,6 +105,7 @@ async function loadMedicineDetails() {
     searchDate.textContent = searchDateParam || getSearchDate();
 
     try {
+
         const response = await fetch(
             `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(ingredientParam)}&sport=${encodeURIComponent(sportParam || "")}&country=${encodeURIComponent(countryParam || "")}`
         );
@@ -111,21 +121,14 @@ async function loadMedicineDetails() {
         const result = data.results?.[0];
 
         if (!result) {
+
             otherNames.textContent = "—";
             dosage.textContent = "—";
             warnings.textContent = "No additional information found.";
-            setStatus(
-                inCompetitionCard,
-                inCompetitionIcon,
-                inCompetitionStatus,
-                "No information"
-            );
-            setStatus(
-                outCompetitionCard,
-                outCompetitionIcon,
-                outCompetitionStatus,
-                "No information"
-            );
+
+            displayStatus("inCompetitionStatus", "—");
+            displayStatus("outCompetitionStatus", "—");
+
             return;
         }
 
@@ -164,40 +167,34 @@ async function loadMedicineDetails() {
             result.out_of_competition ||
             result.outCompetition ||
             result.out_of_competition_status ||
+            result.status ||
             "—";
 
-        setStatus(
-            inCompetitionCard,
-            inCompetitionIcon,
-            inCompetitionStatus,
+        displayStatus(
+            "inCompetitionStatus",
             inStatus
         );
 
-        setStatus(
-            outCompetitionCard,
-            outCompetitionIcon,
-            outCompetitionStatus,
+        displayStatus(
+            "outCompetitionStatus",
             outStatus
         );
 
     } catch (error) {
+
         console.error("Detail Error:", error);
 
         warnings.textContent =
             "Unable to load medicine information.";
 
-        setStatus(
-            inCompetitionCard,
-            inCompetitionIcon,
-            inCompetitionStatus,
-            "Unable to load"
+        displayStatus(
+            "inCompetitionStatus",
+            "—"
         );
 
-        setStatus(
-            outCompetitionCard,
-            outCompetitionIcon,
-            outCompetitionStatus,
-            "Unable to load"
+        displayStatus(
+            "outCompetitionStatus",
+            "—"
         );
     }
 }
