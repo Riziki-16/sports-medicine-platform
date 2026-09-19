@@ -1,319 +1,113 @@
-const params = new URLSearchParams(window.location.search);
+function setSearchDate() {
+    const now = new Date();
 
-const ingredient = params.get("medicine") || "";
-const sport = params.get("sport") || "";
-const country = params.get("country") || "";
+    const searchDate = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Africa/Nairobi",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        timeZoneName: "longOffset"
+    }).format(now);
 
+    document.getElementById("searchDate").textContent = searchDate;
+}
 
-if (ingredient) {
+setSearchDate();
 
-    // Show information received from the search page
-    document.getElementById("medicineName").textContent = ingredient;
+const form = document.getElementById("searchForm");
+const search = document.getElementById("search");
+const userTypeSelect = document.getElementById("userType");
+const results = document.getElementById("results");
 
-    document.getElementById("ingredient").textContent =
-        ingredient || "—";
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-    document.getElementById("sport").textContent =
-        sport || "—";
+    try {
+        const medicine = search.value.trim();
+        const selectedUserType = userTypeSelect.value;
+        const sport = document.getElementById("sport").value;
+        const country = document.getElementById("country").value;
 
-    document.getElementById("country").textContent =
-        country || "—";
+        results.innerHTML = "<p>Searching...</p>";
 
+        const response = await fetch(
+            `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(selectedUserType)}`
+        );
 
-
-    fetch(
-        `http://localhost:3000/search?medicine=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}`
-    )
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        console.log("Detail API response:", data);
-
-
-        if (data.results && data.results.length > 0) {
-
-            const medicine = data.results[0];
-
-            console.log("Medicine data:", medicine);
-
-
-            // Medicine name
-            document.getElementById("medicineName").textContent =
-                medicine.ingredient || ingredient || "—";
-
-
-            // Other names
-            document.getElementById("otherNames").textContent =
-                medicine.other_names || "—";
-
-
-            // Ingredient
-            document.getElementById("ingredient").textContent =
-                medicine.ingredient || ingredient || "—";
-
-
-            // Sport
-            document.getElementById("sport").textContent =
-                medicine.sport || sport || "—";
-
-
-            // Country
-            document.getElementById("country").textContent =
-                medicine.country || country || "—";
-
-
-            // Dosage
-            document.getElementById("dosage").textContent =
-                medicine.dosage || "—";
-
-
-            // Warnings
-            document.getElementById("warnings").textContent =
-                medicine.warnings || "—";
-
-
-            const inCompetitionStatus =
-                medicine.in_competition ||
-                medicine.inCompetition ||
-                medicine.in_competition_status ||
-                medicine.inCompetitionStatus ||
-                medicine.status ||
-                "—";
-
-            const outCompetitionStatus =
-                medicine.out_of_competition ||
-                medicine.outOfCompetition ||
-                medicine.out_of_competition_status ||
-                medicine.outOfCompetitionStatus ||
-                medicine.status ||
-                "—";
-
-
-            
-            displayStatus(
-                "inCompetitionStatus",
-                inCompetitionStatus
-            );
-
-
-            displayStatus(
-                "outCompetitionStatus",
-                outCompetitionStatus
-            );
-
-
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
         }
 
+        const data = await response.json();
 
-        else {
+        console.log("API Response:", data);
 
-            document.getElementById("otherNames").textContent = "—";
+        const firstResult = data.results?.[0];
 
-            document.getElementById("dosage").textContent = "—";
-
-            document.getElementById("warnings").textContent = "—";
-
-
-            displayStatus(
-                "inCompetitionStatus",
-                "—"
-            );
-
-
-            displayStatus(
-                "outCompetitionStatus",
-                "—"
-            );
+        if (!firstResult) {
+            results.innerHTML = `
+                <p><strong>No results found.</strong></p>
+            `;
+            return;
         }
 
-    })
+        const ingredient = firstResult.ingredient || "—";
+        const otherNames = firstResult.other_names || "—";
+        const status = firstResult.status || "—";
+        const dosage = firstResult.dosage || "—";
 
+        let ingredientDisplay;
 
-    .catch(error => {
+        if (ingredient !== "—") {
+            ingredientDisplay = `
+                <a href="detail.html?ingredient=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}">
+                    ${ingredient}
+                </a>
+            `;
+        } else {
+            ingredientDisplay = "—";
+        }
 
-        console.error(
-            "Error loading medicine:",
-            error
-        );
+        results.innerHTML = `
+            <p>
+                <strong>Total Results:</strong>
+                ${data.totalResults ?? "—"}
+            </p>
 
+            <p>
+                <strong>Ingredient:</strong>
+                ${ingredientDisplay}
+            </p>
 
-        document.getElementById("otherNames").textContent = "—";
+            <p>
+                <strong>Other Names:</strong>
+                ${otherNames}
+            </p>
 
-        document.getElementById("dosage").textContent = "—";
+            <p>
+                <strong>Status:</strong>
+                ${status}
+            </p>
 
-        document.getElementById("warnings").textContent = "—";
+            <p>
+                <strong>Dosage:</strong>
+                ${dosage}
+            </p>
+        };
 
+    } catch (error) {
+        console.error("Search Error:", error);
 
-        displayStatus(
-            "inCompetitionStatus",
-            "—"
-        );
-
-
-        displayStatus(
-            "outCompetitionStatus",
-            "—"
-        );
-
-    });
-
-}
-
-
-else {
-
-    document.getElementById("medicineName").textContent =
-        "No medicine selected";
-
-
-    document.getElementById("otherNames").textContent =
-        "—";
-
-
-    document.getElementById("ingredient").textContent =
-        "—";
-
-
-    document.getElementById("sport").textContent =
-        "—";
-
-
-    document.getElementById("country").textContent =
-        "—";
-
-
-    document.getElementById("dosage").textContent =
-        "—";
-
-
-    document.getElementById("warnings").textContent =
-        "—";
-
-
-    displayStatus(
-        "inCompetitionStatus",
-        "—"
-    );
-
-
-    displayStatus(
-        "outCompetitionStatus",
-        "—"
-    );
-}
-
-
-
-function displayStatus(elementId, status) {
-
-    const element =
-        document.getElementById(elementId);
-
-
-    // If the element does not exist
-    if (!element) {
-        return;
+        results.innerHTML = `
+            <p>
+                <strong>Unable to complete the search.</strong>
+            </p>
+            <p>${error.message}</p>
+        `;
     }
+});
 
-
-    const card =
-        element.closest(".status-card");
-
-
-    if (!card) {
-        return;
-    }
-
-
-    const icon =
-        card.querySelector(".status-icon");
-
-
-    // Remove previous colours
-    card.classList.remove(
-        "green",
-        "amber",
-        "red",
-        "grey"
-    );
-
-
-    // Clean the status text
-    const cleanStatus =
-        String(status || "")
-            .trim()
-            .toLowerCase();
-
-
-    //Shows green if allowed, not prohibited, or permitted
-
-    if (
-        cleanStatus === "green" ||
-        cleanStatus === "allowed" ||
-        cleanStatus === "not prohibited" ||
-        cleanStatus === "permitted"
-    ) {
-
-        card.classList.add("green");
-
-        element.textContent =
-            "Allowed";
-
-        icon.textContent =
-            "✓";
-    }
-
-
-    //Shows amber if conditional, restricted, or allowed with conditions
-
-    else if (
-        cleanStatus === "amber" ||
-        cleanStatus === "conditional" ||
-        cleanStatus === "allowed with conditions" ||
-        cleanStatus === "restricted" ||
-        cleanStatus.includes("condition")
-    ) {
-
-        card.classList.add("amber");
-
-        element.textContent =
-            "Allowed with Conditions";
-
-        icon.textContent =
-            "!";
-    }
-
-
-    // Shows red if prohibited, banned, or not allowed
-    else if (
-        cleanStatus === "red" ||
-        cleanStatus === "prohibited" ||
-        cleanStatus === "banned" ||
-        cleanStatus === "not allowed"
-    ) {
-
-        card.classList.add("red");
-
-        element.textContent =
-            "Not Allowed";
-
-        icon.textContent =
-            "✕";
-    }
-
-    // shows grey color if the status is unknown or not provided
-    
-
-    else {
-
-        card.classList.add("grey");
-
-        element.textContent =
-            "No Information";
-
-        icon.textContent =
-            "—";
-    }
-}
