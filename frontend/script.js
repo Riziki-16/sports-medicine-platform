@@ -3,8 +3,6 @@ const search = document.getElementById("search");
 const userType = document.getElementById("userType");
 const results = document.getElementById("results");
 
-
-// When the search form is submitted
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -13,47 +11,69 @@ form.addEventListener("submit", async (event) => {
     const sport = document.getElementById("sport").value;
     const country = document.getElementById("country").value;
 
-    const response = await fetch(
-        `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
-    );
+    try {
 
-    const data = await response.json();
+        const response = await fetch(
+            `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
+        );
 
-    const firstResult = data.results[0];
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
 
-    const ingredient = firstResult?.ingredient || "—";
+        const data = await response.json();
 
-    const otherNames = firstResult?.other_names || "—";
+        console.log("Search API Response:", data);
 
-    const status = firstResult?.status || "—";
+        const firstResult = data.results?.[0];
 
-    const dosage = firstResult?.dosage || "—";
+        if (!firstResult) {
+            results.innerHTML = `
+                <p><strong>Total Results:</strong> 0</p>
+                <p><strong>Ingredient:</strong> —</p>
+                <p><strong>Other Names:</strong> —</p>
+                <p><strong>Status:</strong> —</p>
+                <p><strong>Dosage:</strong> —</p>
+            `;
+            return;
+        }
 
-// Creating a variable that will display ingredient
+        const ingredient = firstResult.ingredient || "—";
+        const otherNames = firstResult.other_names || "—";
+        const status = firstResult.status || "—";
+        const dosage = firstResult.dosage || "—";
 
-    let ingredientDisplay;
+        let ingredientDisplay;
 
-    if (ingredient !== "—") {
+        if (ingredient !== "—") {
 
-        ingredientDisplay =
-            `<a href="detail.html?ingredient=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}">${ingredient}</a>`;
+            ingredientDisplay =
+                `<a href="detail.html?ingredient=${encodeURIComponent(ingredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}">${ingredient}</a>`;
 
-    } else {
+        } else {
 
-        ingredientDisplay = "—";
+            ingredientDisplay = "—";
+        }
+
+        results.innerHTML = `
+            <p><strong>Total Results:</strong> ${data.totalResults || 0}</p>
+
+            <p><strong>Ingredient:</strong> ${ingredientDisplay}</p>
+
+            <p><strong>Other Names:</strong> ${otherNames}</p>
+
+            <p><strong>Status:</strong> ${status}</p>
+
+            <p><strong>Dosage:</strong> ${dosage}</p>
+        `;
+
+    } catch (error) {
+
+        console.error("Search Error:", error);
+
+        results.innerHTML = `
+            <p><strong>Error connecting to the medicine database.</strong></p>
+            <p>${error.message}</p>
+        `;
     }
-
-
-    results.innerHTML = `
-        <p><strong>Total Results:</strong> ${data.totalResults}</p>
-
-        <p><strong>Ingredient:</strong> ${ingredientDisplay}</p>
-
-        <p><strong>Other Names:</strong> ${otherNames}</p>
-
-        <p><strong>Status:</strong> ${status}</p>
-
-        <p><strong>Dosage:</strong> ${dosage}</p>
-    `;
-
 });
