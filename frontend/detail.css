@@ -94,7 +94,6 @@ nav a:hover {
     justify-content: center;
     gap: 25px;
     flex-wrap: wrap;
-    
 }
 
 
@@ -195,19 +194,24 @@ nav a:hover {
     padding: 20px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
     color: #222;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
 }
 
 .information-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
-    padding: 14px 5px;
+    gap: 15px;
+    padding: 14px 12px;
+    min-height: 65px;
     border-bottom: 1px solid #ddd;
 }
 
-.information-row:last-child {
-    border-bottom: none;
+.information-row:nth-child(odd) {
+    border-right: 1px solid #ddd;
 }
 
 .information-row span {
@@ -219,7 +223,6 @@ nav a:hover {
     text-align: right;
     color: #222;
 }
-
 .warning-section {
     margin-top: 30px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
