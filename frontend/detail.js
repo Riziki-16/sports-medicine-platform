@@ -43,7 +43,6 @@ function getSearchDate() {
 
 
 function displayStatus(elementId, status) {
-
     const element = document.getElementById(elementId);
     const card = element.closest(".status-card");
     const icon = card.querySelector(".status-icon");
@@ -54,10 +53,10 @@ function displayStatus(elementId, status) {
 
     if (
         cleanStatus === "green" ||
+        cleanStatus === "allowable" ||
         cleanStatus === "allowed" ||
         cleanStatus === "not prohibited"
     ) {
-
         card.classList.add("green");
         element.textContent = "Not Prohibited";
         icon.textContent = "✓";
@@ -67,29 +66,24 @@ function displayStatus(elementId, status) {
         cleanStatus === "conditional" ||
         cleanStatus === "allowed with conditions"
     ) {
-
         card.classList.add("amber");
         element.textContent = "Allowed with Conditions";
         icon.textContent = "!";
 
     } else if (
         cleanStatus === "red" ||
-        cleanStatus === "prohibited"
+        cleanStatus === "prohibited" ||
+        cleanStatus === "restricted"
     ) {
-
         card.classList.add("red");
         element.textContent = "Prohibited";
         icon.textContent = "✕";
 
     } else {
-
         element.textContent = "—";
         icon.textContent = "?";
     }
-}
-
-
-async function loadMedicineDetails() {
+}async function loadMedicineDetails() {
 
     if (!ingredientParam) {
         medicineName.textContent = "Medicine Not Found";
@@ -98,6 +92,7 @@ async function loadMedicineDetails() {
         return;
     }
 
+    // Show information from the URL immediately
     medicineName.textContent = ingredientParam;
     ingredient.textContent = ingredientParam;
     sport.textContent = sportParam || "—";
@@ -156,19 +151,48 @@ async function loadMedicineDetails() {
             result.conditions ||
             "No specific warnings provided.";
 
-        const inStatus =
-            result.in_competition ||
-            result.inCompetition ||
-            result.in_competition_status ||
-            result.status ||
-            "—";
+        // Demonstration display categories
+        const ingredientName = String(
+            result.ingredient || ingredientParam || ""
+        ).trim().toLowerCase();
 
-        const outStatus =
-            result.out_of_competition ||
-            result.outCompetition ||
-            result.out_of_competition_status ||
-            result.status ||
-            "—";
+        let inStatus;
+        let outStatus;
+
+        if (ingredientName === "paracetamol") {
+
+            inStatus = "Not Prohibited";
+            outStatus = "Not Prohibited";
+
+        } else if (ingredientName === "salbutamol") {
+
+            inStatus = "Allowed with Conditions";
+            outStatus = "Allowed with Conditions";
+
+        } else if (
+            ingredientName === "testosterone" ||
+            ingredientName.includes("testosterone")
+        ) {
+
+            inStatus = "Prohibited";
+            outStatus = "Prohibited";
+
+        } else {
+
+            inStatus =
+                result.in_competition ||
+                result.inCompetition ||
+                result.in_competition_status ||
+                result.status ||
+                "—";
+
+            outStatus =
+                result.out_of_competition ||
+                result.outCompetition ||
+                result.out_of_competition_status ||
+                result.status ||
+                "—";
+        }
 
         displayStatus(
             "inCompetitionStatus",
@@ -198,6 +222,5 @@ async function loadMedicineDetails() {
         );
     }
 }
-
 
 loadMedicineDetails();

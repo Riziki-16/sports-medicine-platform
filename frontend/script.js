@@ -13,9 +13,9 @@ form.addEventListener("submit", async (event) => {
 
     try {
 
-        const response = await fetch(
-            `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
-        );
+       const response = await fetch(
+    `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
+);
 
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);
@@ -40,9 +40,28 @@ form.addEventListener("submit", async (event) => {
 
         const ingredient = firstResult.ingredient || "—";
         const otherNames = firstResult.other_names || "—";
-        const status = firstResult.status || "—";
-        const dosage = firstResult.dosage || "—";
+       const actualStatus = firstResult.status || "Not classified";
+const dosage = firstResult.dosage || "—";
+const warning = firstResult.warning || "—";
 
+let displayStatus = actualStatus;
+let statusColor = "#6c757d";
+
+// Demonstration display categories
+const ingredientName = (firstResult.ingredient || "").toLowerCase();
+
+if (ingredientName === "paracetamol") {
+    displayStatus = "Not Prohibited";
+    statusColor = "green";
+}
+else if (ingredientName === "salbutamol") {
+    displayStatus = "Allowed with Conditions";
+    statusColor = "orange";
+}
+else if (ingredientName === "testosterone") {
+    displayStatus = "Prohibited";
+    statusColor = "red";
+}
         let ingredientDisplay;
 
         if (ingredient !== "—") {
@@ -62,9 +81,19 @@ form.addEventListener("submit", async (event) => {
 
             <p><strong>Other Names:</strong> ${otherNames}</p>
 
-            <p><strong>Status:</strong> ${status}</p>
+            <p>
+    <strong>Status:</strong>
+    <span style="color: ${statusColor}; font-weight: bold;">
+        ${displayStatus}
+    </span>
+</p>
 
-            <p><strong>Dosage:</strong> ${dosage}</p>
+<p><strong>WADA classification:</strong> ${actualStatus}</p>
+
+<p><strong>Dosage:</strong> ${dosage}</p>
+
+<p><strong>Conditions / Warnings:</strong> ${warning}</p>
+
         `;
 
     } catch (error) {
