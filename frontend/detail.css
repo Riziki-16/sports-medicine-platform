@@ -127,70 +127,52 @@ nav a:hover {
     font-weight: bold;
 }
 
-
 .status-card.green {
+    background: #198754;
     border-color: #198754;
+    color: white;
 }
 
 .status-card.green .status-icon {
-    background: #198754;
-    color: white;
-}
-
-.status-card.green p {
+    background: white;
     color: #198754;
 }
 
+.status-card.green h3,
+.status-card.green p {
+    color: white;
+}
+
 .status-card.amber {
+    background: #f0ad00;
     border-color: #f0ad00;
+    color: white;
 }
 
 .status-card.amber .status-icon {
-    background: #f0ad00;
-    color: white;
-}
-
-.status-card.amber p {
+    background: white;
     color: #c48600;
 }
 
+.status-card.amber h3,
+.status-card.amber p {
+    color: white;
+}
+
 .status-card.red {
+    background: #dc3545;
     border-color: #dc3545;
+    color: white;
 }
 
 .status-card.red .status-icon {
-    background: #dc3545;
-    color: white;
-}
-
-.status-card.red p {
+    background: white;
     color: #dc3545;
 }
 
-
-.status-card.grey {
-    border-color: #999;
-}
-
-.status-card.grey .status-icon {
-    background: #999;
+.status-card.red h3,
+.status-card.red p {
     color: white;
-}
-
-.status-card.grey p {
-    color: #777;
-}
-
-.status-card h3 {
-    margin-bottom: 12px;
-    font-size: 19px;
-    color: #222;
-}
-
-.status-card p {
-    font-size: 17px;
-    font-weight: bold;
-    color: #222;
 }
 
 .warning-section {
