@@ -51,7 +51,7 @@ form.addEventListener("submit", async function(event) {
             output += `
                 <a class="formulation-item"
                    href="detail.html?ingredient=${encodeURIComponent(name)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}">
-                    ${name}
+                    ${index + 1}. ${name}
                 </a>
             `;
 

@@ -198,6 +198,41 @@ button:active {
 
 #results strong {
     color: #35c878;
+
+}
+.formulation-list {
+    width: 100%;
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.formulation-title {
+    padding: 15px 20px;
+    background: #dfe6ef;
+    color: #222;
+    font-weight: bold;
+    font-size: 17px;
+}
+
+.formulation-item {
+    display: block;
+    padding: 15px 20px;
+    background: white;
+    color: #006b3c;
+    text-decoration: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.formulation-item:nth-child(even) {
+    background: #e5ebf2;
+}
+
+.formulation-item:hover {
+    background: #c8e6d5;
+    color: #004d2c;
 }
 footer {
     position: relative;
