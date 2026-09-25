@@ -46,7 +46,7 @@ form.addEventListener("submit", async function(event) {
 
         medicineResults.forEach(function(medicine, index)  {
 
-            const name = medicine.medicine_name || medicine.ingredient;
+           const name = medicine.search_for || medicine.medicine_name || medicine.ingredient;
 
             output += `
                 <a class="formulation-item"
