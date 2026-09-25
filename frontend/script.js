@@ -44,7 +44,7 @@ form.addEventListener("submit", async function(event) {
                 </div>
         `;
 
-        medicineResults.forEach(function(medicine) {
+        medicineResults.forEach(function(medicine, index)  {
 
             const name = medicine.medicine_name || medicine.ingredient;
 
