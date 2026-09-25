@@ -55,6 +55,11 @@ db.getConnection()
     m.medicine_name AS search_for,
     TRIM(s.chemical_name) AS ingredient,
     GROUP_CONCAT(DISTINCT sn.other_name SEPARATOR ', ') AS other_names,
+    GROUP_CONCAT(
+    DISTINCT b.brand_name
+    ORDER BY b.brand_name
+    SEPARATOR ', '
+) AS brand_names,
     sp.sports_name AS sport,
     c.country_name AS country,
     COALESCE(r.status, 'Not classified') AS status,
@@ -73,7 +78,7 @@ db.getConnection()
         ON s.substance_id = sn.substance_id
 
     LEFT JOIN brands b
-        ON s.substance_id = b.substance_id
+    ON b.medicine_id = m.medicine_id
 
     LEFT JOIN dosages d
         ON s.substance_id = d.substance_id
@@ -104,7 +109,12 @@ db.getConnection()
         m.medicine_name = ?
         OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
         OR sn.other_name = ?
-        OR b.brand_name LIKE CONCAT('%', ?, '%')
+        OR EXISTS (
+    SELECT 1
+    FROM brands bsearch
+    WHERE bsearch.substance_id = s.substance_id
+      AND bsearch.brand_name LIKE CONCAT('%', ?, '%')
+)
 
     GROUP BY
         m.medicine_id,
