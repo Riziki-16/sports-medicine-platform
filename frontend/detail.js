@@ -137,9 +137,14 @@ function displayStatus(elementId, status) {
             result.ingredient ||
             ingredientParam;
 
-        otherNames.textContent =
-            result.other_names ||
-            "—";
+        const names = [
+    result.other_names,
+    result.brand_names
+].filter(Boolean);
+
+otherNames.textContent = names.length
+    ? names.join(", ")
+    : "—";
 
         dosage.textContent =
             result.dosage ||
