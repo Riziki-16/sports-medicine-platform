@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Clean Sport Kenya</title>
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="detail.css">
 </head>
@@ -34,6 +36,7 @@
             <option value="other">Other</option>
         </select>
 
+
         <label for="sport">Sport:</label>
 
         <select id="sport" name="sport">
@@ -42,17 +45,18 @@
             <option value="football">Football</option>
             <option value="volleyball">Volleyball</option>
             <option value="basketball">Basketball</option>
-            <option value="rugby ">Rugby </option>
+            <option value="rugby">Rugby</option>
             <option value="cricket">Cricket</option>
             <option value="motor sport">Motor Sport</option>
-            <option value="swimming ">Swimming </option>
+            <option value="swimming">Swimming</option>
             <option value="handball">Handball</option>
             <option value="baseball">Baseball</option>
             <option value="boxing">Boxing</option>
-            <option value="wheight lifting">Weight Lifting</option>
+            <option value="weight lifting">Weight Lifting</option>
             <option value="hockey">Hockey</option>
             <option value="archery">Archery</option>
         </select>
+
 
         <label for="country">Nation of Purchase:</label>
 
@@ -77,6 +81,7 @@
             <option value="United States">United States</option>
         </select>
 
+
         <label for="search">Medicine/Substance:</label>
 
         <input
@@ -87,44 +92,103 @@
             list="medicineNames"
         >
 
-      <h2 class="scan-heading">Scan Your Medicine</h2>
 
-<div class="medicine-scanner">
+        
 
-    <div class="scanner-icon">📷</div>
+        <h2 class="scan-heading">Scan Your Medicine</h2>
 
-    <h3>Identify Your Medicine</h3>
+        <div class="medicine-scanner">
 
-    <p>
-        Take a photo of your medicine package or upload an image
-        to find its information.
-    </p>
+           
 
-    <label for="medicineImage" class="upload-area">
+            <div class="scan-step">
 
-        <span class="upload-icon">＋</span>
+                <div class="step-number">1</div>
 
-        <strong>Take or upload a photo</strong>
+                <div class="scanner-icon">📷</div>
 
-        <small>JPG or PNG</small>
+                <h3>Upload Photo</h3>
 
-    </label>
+                <p>
+                    Take a photo or upload a clear image
+                    of your medicine package.
+                </p>
 
-    <input
-        type="file"
-        id="medicineImage"
-        accept="image/*"
-        capture="environment"
-        hidden
-    >
+                <label
+                    for="medicineImage"
+                    class="upload-area"
+                >
 
-    <div id="scanPreview"></div>
+                    <span class="upload-icon">＋</span>
 
-    <button type="button" id="scanMedicine" class="scan-button">
-        Scan Medicine
-    </button>
+                    <strong>Choose Photo</strong>
 
-</div>
+                    <small>JPG, JPEG or PNG</small>
+
+                </label>
+
+                <input
+                    type="file"
+                    id="medicineImage"
+                    accept="image/*"
+                    capture="environment"
+                >
+
+            </div>
+
+
+
+            <div class="scan-step">
+
+                <div class="step-number">2</div>
+
+                <div class="scanner-icon">👁️</div>
+
+                <h3>Preview</h3>
+
+                <p>
+                    Check that your medicine image
+                    is clear before scanning.
+                </p>
+
+                <div id="scanPreview">
+
+                    <span class="preview-placeholder">
+                        Your image will appear here
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="scan-step">
+
+                <div class="step-number">3</div>
+
+                <div class="scanner-icon">🔍</div>
+
+                <h3>Identify Medicine</h3>
+
+                <p>
+                    Scan the image to identify the
+                    medicine and find its information.
+                </p>
+
+                <button
+                    type="button"
+                    id="scanMedicine"
+                    class="scan-button"
+                >
+                    Scan Medicine
+                </button>
+
+            </div>
+
+        </div>
+
+
+
         <datalist id="medicineNames">
 
             <option value="Paracetamol">
@@ -155,27 +219,44 @@
 
         </datalist>
 
-        <button type="submit">Search</button>
+
+
+        <button type="submit">
+            Search
+        </button>
 
     </form>
 
+
+
     <h2>Search Results</h2>
+
     <div id="results">
-    <div class="results-header">
-        <strong>Total Results:</strong> 0
-    </div>
 
-    <div class="formulation-list">
-        <div class="formulation-title">
-            Formulation Name
+        <div class="results-header">
+
+            <strong>Total Results:</strong> 0
+
         </div>
-    </div>
-    </div>
 
+        <div class="formulation-list">
+
+            <div class="formulation-title">
+                Formulation Name
+            </div>
+
+        </div>
+
+    </div>
 
     <footer>
-    <p>&copy; 2026 Akili EdTech. All Rights Reserved.</p>
-</footer>
+
+        <p>
+            &copy; 2026 Akili EdTech. All Rights Reserved.
+        </p>
+
+    </footer>
+
 
     <script src="script.js"></script>
 
