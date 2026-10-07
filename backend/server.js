@@ -60,6 +60,20 @@ db.getConnection()
     ORDER BY b.brand_name
     SEPARATOR ', '
 ) AS brand_names,
+
+(
+    SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'brand_id', b2.brand_id,
+            'brand_name', b2.brand_name,
+            'image_url', bi.image_url
+        )
+    )
+    FROM brands b2
+    LEFT JOIN brand_images bi
+        ON b2.brand_id = bi.brand_id
+    WHERE b2.substance_id = s.substance_id
+) AS brands,
     sp.sports_name AS sport,
     c.country_name AS country,
     COALESCE(r.status, 'Not classified') AS status,
