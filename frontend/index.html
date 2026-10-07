@@ -87,6 +87,44 @@
             list="medicineNames"
         >
 
+      <h2 class="scan-heading">Scan Your Medicine</h2>
+
+<div class="medicine-scanner">
+
+    <div class="scanner-icon">📷</div>
+
+    <h3>Identify Your Medicine</h3>
+
+    <p>
+        Take a photo of your medicine package or upload an image
+        to find its information.
+    </p>
+
+    <label for="medicineImage" class="upload-area">
+
+        <span class="upload-icon">＋</span>
+
+        <strong>Take or upload a photo</strong>
+
+        <small>JPG or PNG</small>
+
+    </label>
+
+    <input
+        type="file"
+        id="medicineImage"
+        accept="image/*"
+        capture="environment"
+        hidden
+    >
+
+    <div id="scanPreview"></div>
+
+    <button type="button" id="scanMedicine" class="scan-button">
+        Scan Medicine
+    </button>
+
+</div>
         <datalist id="medicineNames">
 
             <option value="Paracetamol">

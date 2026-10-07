@@ -70,3 +70,25 @@ form.addEventListener("submit", async function(event) {
         `;
     }
 });
+
+const medicineImage = document.getElementById("medicineImage");
+const scanPreview = document.getElementById("scanPreview");
+
+medicineImage.addEventListener("change", function () {
+
+    const file = medicineImage.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const imageURL = URL.createObjectURL(file);
+
+    scanPreview.innerHTML = `
+        <img
+            src="${imageURL}"
+            alt="Selected medicine"
+        >
+        <p>${file.name}</p>
+    `;
+});
