@@ -1,7 +1,3 @@
-// ===============================
-// SEARCH FORM
-// ===============================
-
 const form = document.getElementById("searchForm");
 const search = document.getElementById("search");
 const userType = document.getElementById("userType");

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,6 @@
     <title>Clean Sport Kenya</title>
 
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="detail.css">
 </head>
 
 <body>
@@ -19,230 +19,182 @@
         <a href="#">FAQS</a>
     </nav>
 
-    <h1>Clean Sport Kenya</h1>
+    <div class="page-header">
+        <h1>Clean Sport Kenya</h1>
+    </div>
 
-    <h2>Search Form</h2>
+    <div class="search-container">
 
-    <form id="searchForm">
+        <h2>Search Form</h2>
 
-        <label for="userType">User Type:</label>
+        <form id="searchForm">
 
-        <select id="userType" name="userType">
-            <option value="" disabled selected>Select user type</option>
-            <option value="athlete">Athlete</option>
-            <option value="pharmacist">Pharmacist</option>
-            <option value="sport administrator">Sports Administrator</option>
-            <option value="parent">Parent</option>
-            <option value="other">Other</option>
-        </select>
+            <div class="search-fields">
 
+                <div class="form-field">
 
-        <label for="sport">Sport:</label>
+                    <label for="userType">
+                        User Type:
+                    </label>
 
-        <select id="sport" name="sport">
-            <option value="" disabled selected>Select sport</option>
-            <option value="Track & Field">Track & Field</option>
-            <option value="football">Football</option>
-            <option value="volleyball">Volleyball</option>
-            <option value="basketball">Basketball</option>
-            <option value="rugby">Rugby</option>
-            <option value="cricket">Cricket</option>
-            <option value="motor sport">Motor Sport</option>
-            <option value="swimming">Swimming</option>
-            <option value="handball">Handball</option>
-            <option value="baseball">Baseball</option>
-            <option value="boxing">Boxing</option>
-            <option value="weight lifting">Weight Lifting</option>
-            <option value="hockey">Hockey</option>
-            <option value="archery">Archery</option>
-        </select>
+                    <select id="userType" name="userType">
 
+                        <option value="" disabled selected> Select user type </option>
+                        <option value="athlete"> Athlete </option>
+                        <option value="pharmacist"> Pharmacist </option>
+                        <option value="sport administrator"> Sports Administrator </option>
+                        <option value="parent"> Parent </option>
+                        <option value="other"> Other </option>
 
-        <label for="country">Nation of Purchase:</label>
+                    </select>
 
-        <select id="country" name="country">
-            <option value="" disabled selected>Select country</option>
+                </div>
 
-            <option value="Australia">Australia</option>
-            <option value="Canada">Canada</option>
-            <option value="China">China</option>
-            <option value="France">France</option>
-            <option value="Germany">Germany</option>
-            <option value="Ghana">Ghana</option>
-            <option value="India">India</option>
-            <option value="Japan">Japan</option>
-            <option value="Kenya">Kenya</option>
-            <option value="Nigeria">Nigeria</option>
-            <option value="Rwanda">Rwanda</option>
-            <option value="South Africa">South Africa</option>
-            <option value="Tanzania">Tanzania</option>
-            <option value="Uganda">Uganda</option>
-            <option value="United Kingdom">United Kingdom</option>
-            <option value="United States">United States</option>
-        </select>
+                <div class="form-field">
 
+                    <label for="sport"> Sport:</label>
 
-        <label for="search">Medicine/Substance:</label>
+                    <select id="sport" name="sport">
 
-        <input
-            type="text"
-            id="search"
-            name="search"
-            placeholder="Enter medicine or substance"
-            list="medicineNames"
-        >
+                        <option value="" disabled selected> Select sport </option>
+                        <option value="Track & Field"> Track & Field </option>
+                        <option value="football"> Football </option>
+                        <option value="volleyball"> Volleyball </option>
+                        <option value="basketball"> Basketball </option>
+                        <option value="rugby"> Rugby </option>
+                        <option value="cricket"> Cricket </option>
+                        <option value="motor sport"> Motor Sport</option>
+                        <option value="swimming"> Swimming </option>
+                        <option value="handball"> Handball </option>
+                        <option value="baseball"> Baseball</option>
+                        <option value="boxing"> Boxing </option>
+                        <option value="weight lifting"> Weight Lifting </option>
+                        <option value="hockey"> Hockey </option>
+                        <option value="archery"> Archery </option>
 
+                    </select>
 
-        
+                </div>
 
-        <h2 class="scan-heading">Scan Your Medicine</h2>
+                <div class="form-field">
 
-        <div class="medicine-scanner">
+                    <label for="country">
+                        Nation of Purchase:
+                    </label>
 
-           
+                    <select id="country" name="country">
 
-            <div class="scan-step">
+                        <option value="" disabled selected> Select country </option>
 
-                <div class="step-number">1</div>
+                        <option value="Australia">Australia</option>
+                        <option value="Canada">Canada</option>
+                        <option value="China">China</option>
+                        <option value="France">France</option>
+                        <option value="Germany">Germany</option>
+                        <option value="Ghana">Ghana</option>
+                        <option value="India">India</option>
+                        <option value="Japan">Japan</option>
+                        <option value="Kenya">Kenya</option>
+                        <option value="Nigeria">Nigeria</option>
+                        <option value="Rwanda">Rwanda</option>
+                        <option value="South Africa">South Africa</option>
+                        <option value="Tanzania">Tanzania</option>
+                        <option value="Uganda">Uganda</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="United States">United States</option>
 
-                <div class="scanner-icon">📷</div>
+                    </select>
 
-                <h3>Upload Photo</h3>
+                </div>
 
-                <p>
-                    Take a photo or upload a clear image
-                    of your medicine package.
-                </p>
+                <div class="form-field">
 
-                <label
-                    for="medicineImage"
-                    class="upload-area"
-                >
+                    <label for="search">
+                        Medicine/Substance:
+                    </label>
 
-                    <span class="upload-icon">＋</span>
-
-                    <strong>Choose Photo</strong>
-
-                    <small>JPG, JPEG or PNG</small>
-
-                </label>
-
-                <input
-                    type="file"
-                    id="medicineImage"
-                    accept="image/*"
-                    capture="environment"
-                >
-
-            </div>
-
-
-
-            <div class="scan-step">
-
-                <div class="step-number">2</div>
-
-                <div class="scanner-icon">👁️</div>
-
-                <h3>Preview</h3>
-
-                <p>
-                    Check that your medicine image
-                    is clear before scanning.
-                </p>
-
-                <div id="scanPreview">
-
-                    <span class="preview-placeholder">
-                        Your image will appear here
-                    </span>
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        placeholder="Enter medicine or substance"
+                        list="medicineNames"
+                    >
 
                 </div>
 
             </div>
 
+            <div class="search-button-container">
 
-            <div class="scan-step">
-
-                <div class="step-number">3</div>
-
-                <div class="scanner-icon">🔍</div>
-
-                <h3>Identify Medicine</h3>
-
-                <p>
-                    Scan the image to identify the
-                    medicine and find its information.
-                </p>
-
-                <button
-                    type="button"
-                    id="scanMedicine"
-                    class="scan-button"
-                >
-                    Scan Medicine
+                <button type="submit">
+                    Search
                 </button>
 
             </div>
 
-        </div>
+    </div>
 
+    </div>
 
+            <datalist id="medicineNames">
 
-        <datalist id="medicineNames">
+                <option value="Paracetamol">
+                <option value="Ibuprofen">
 
-            <option value="Paracetamol">
-            <option value="Ibuprofen">
+                <option value="1-Androstenediol">
+                <option value="1-Androstenedione">
+                <option value="1-Androsterone">
+                <option value="1-Epiandrosterone">
+                <option value="1-Testosterone">
+                <option value="4-Androstenediol">
+                <option value="4-Hydroxytestosterone">
+                <option value="5-Androstenedione">
+                <option value="7α-hydroxy-DHEA">
+                <option value="7β-hydroxy-DHEA">
+                <option value="7-Keto-DHEA">
+                <option value="17α-methylepithiostanol">
+                <option value="19-Norandrostenediol">
+                <option value="19-Norandrostenedione">
+                <option value="Androstanolone">
+                <option value="Androstenediol">
+                <option value="Androstenedione">
+                <option value="Bolasterone">
+                <option value="Boldenone">
+                <option value="Boldione">
+                <option value="Calusterone">
+                <option value="Clostebol">
 
-            <option value="1-Androstenediol">
-            <option value="1-Androstenedione">
-            <option value="1-Androsterone">
-            <option value="1-Epiandrosterone">
-            <option value="1-Testosterone">
-            <option value="4-Androstenediol">
-            <option value="4-Hydroxytestosterone">
-            <option value="5-Androstenedione">
-            <option value="7α-hydroxy-DHEA">
-            <option value="7β-hydroxy-DHEA">
-            <option value="7-Keto-DHEA">
-            <option value="17α-methylepithiostanol">
-            <option value="19-Norandrostenediol">
-            <option value="19-Norandrostenedione">
-            <option value="Androstanolone">
-            <option value="Androstenediol">
-            <option value="Androstenedione">
-            <option value="Bolasterone">
-            <option value="Boldenone">
-            <option value="Boldione">
-            <option value="Calusterone">
-            <option value="Clostebol">
+            </datalist>
 
-        </datalist>
+        </form>
 
+    </div>
 
+    <div class="results-container">
 
-        <button type="submit">
-            Search
-        </button>
+        <h2>
+            Search Results
+        </h2>
 
-    </form>
+        <div id="results">
 
+            <div class="results-header">
 
+                <strong>
+                    Total Results:
+                </strong>
 
-    <h2>Search Results</h2>
+                0
 
-    <div id="results">
+            </div>
 
-        <div class="results-header">
+            <div class="formulation-list">
 
-            <strong>Total Results:</strong> 0
+                <div class="formulation-title">
+                    Formulation Name
+                </div>
 
-        </div>
-
-        <div class="formulation-list">
-
-            <div class="formulation-title">
-                Formulation Name
             </div>
 
         </div>
@@ -257,8 +209,8 @@
 
     </footer>
 
-
     <script src="script.js"></script>
 
 </body>
+
 </html>
