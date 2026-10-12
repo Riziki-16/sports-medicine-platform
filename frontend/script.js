@@ -117,167 +117,46 @@ form.addEventListener("submit", async function(event) {
 
 
 
-// ===============================
-// MEDICINE IMAGE SCANNER
-// ===============================
+const openScanner = document.getElementById("openScanner");
+const closeScanner = document.getElementById("closeScanner");
+const scannerModal = document.getElementById("scannerModal");
+const medicinePhoto = document.getElementById("medicinePhoto");
+const preview = document.getElementById("preview");
+const scannerStatus = document.getElementById("scannerStatus");
 
-const medicineImage = document.getElementById("medicineImage");
-const scanPreview = document.getElementById("scanPreview");
-const scanMedicine = document.getElementById("scanMedicine");
+openScanner.addEventListener("click", function () {
+    scannerModal.hidden = false;
+});
 
+closeScanner.addEventListener("click", function () {
+    scannerModal.hidden = true;
+});
 
-// When the user selects an image
-medicineImage.addEventListener("change", function() {
+medicinePhoto.addEventListener("change", function () {
+    const photo = medicinePhoto.files[0];
 
-    const file = medicineImage.files[0];
-
-
-    // If no image was selected
-    if (!file) {
-        return;
+    if (photo) {
+        preview.src = URL.createObjectURL(photo);
+        preview.hidden = false;
+        scannerStatus.textContent = "Photo selected successfully.";
     }
-
-
-    // Create a temporary URL for the image
-    const imageURL = URL.createObjectURL(file);
-
-
-    // Show the image on the page
-    scanPreview.innerHTML = `
-        <img
-            src="${imageURL}"
-            alt="Selected medicine"
-            class="preview-image"
-        >
-
-        <p>${file.name}</p>
-
-        <p>
-            Click "Scan Medicine" to identify the medicine.
-        </p>
-    `;
-
 });
 
 
+preview.addEventListener("click", function () {
+    const medicineName = search.value.trim();
 
-// ===============================
-// SCAN MEDICINE
-// ===============================
-
-scanMedicine.addEventListener("click", async function() {
-
-    // Get the selected image
-    const file = medicineImage.files[0];
-
-
-    // Make sure an image was selected
-    if (!file) {
-
-        alert("Please take or upload a medicine photo first.");
-
+    if (medicineName === "") {
+        alert("Please enter the medicine name before opening its details.");
         return;
     }
 
+    const sport = document.getElementById("sport").value;
+    const country = document.getElementById("country").value;
 
-    // Change the button text while scanning
-    scanMedicine.textContent = "Identifying...";
-    scanMedicine.disabled = true;
-
-
-    try {
-
-        // Create a form to send the image
-        const formData = new FormData();
-
-        formData.append("image", file);
-
-
-        // Send the image to the backend
-        const response = await fetch(
-            "https://sports-medicine-platform-production.up.railway.app/identify-medicine",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
-
-
-        // Get the response from the backend
-        const data = await response.json();
-
-        console.log("AI result:", data);
-
-
-        // Check if the AI found a medicine name
-        if (!data.medicineName) {
-
-            scanPreview.innerHTML += `
-                <p class="scan-error">
-                    Medicine could not be identified.
-                    Please try a clearer photo.
-                </p>
-            `;
-
-            return;
-        }
-
-
-        // Get the medicine name identified by the AI
-        const medicineName = data.medicineName;
-
-
-        // Get the selected sport and country
-        const sport = document.getElementById("sport").value;
-        const country = document.getElementById("country").value;
-
-
-        // Create the image URL again
-        const imageURL = URL.createObjectURL(file);
-
-
-        // Show the identified medicine
-        // The image is now clickable
-        scanPreview.innerHTML = `
-            <a
-                href="detail.html?ingredient=${encodeURIComponent(medicineName)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}"
-                class="medicine-image-link"
-            >
-
-                <img
-                    src="${imageURL}"
-                    alt="${medicineName}"
-                    class="preview-image"
-                >
-
-            </a>
-
-            <p>
-                <strong>${medicineName}</strong>
-            </p>
-
-            <p>
-                Click the image to view medicine details.
-            </p>
-        `;
-
-
-    } catch (error) {
-
-        console.log("Scan error:", error);
-
-        scanPreview.innerHTML += `
-            <p class="scan-error">
-                Unable to identify the medicine.
-                Please try again.
-            </p>
-        `;
-
-    }
-
-
-    // Return the button to normal
-    scanMedicine.textContent = "Scan Medicine";
-    scanMedicine.disabled = false;
-
+    window.location.href = "detail.html?ingredient=" +
+        encodeURIComponent(medicineName) +
+        "&sport=" + encodeURIComponent(sport) +
+        "&country=" + encodeURIComponent(country);
 });
+
