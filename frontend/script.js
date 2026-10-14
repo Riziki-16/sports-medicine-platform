@@ -114,8 +114,110 @@ form.addEventListener("submit", async function(event) {
     }
 
 });
+/*
+const openScanner = document.getElementById("openScanner");
+const scannerModal = document.getElementById("scannerModal");
+const closeScanner = document.getElementById("closeScanner");
+
+const takePicture = document.getElementById("takePicture");
+const uploadPicture = document.getElementById("uploadPicture");
+const medicinePhoto = document.getElementById("medicinePhoto");
+
+const cameraPanel = document.getElementById("cameraPanel");
+const cameraVideo = document.getElementById("cameraVideo");
+const capturePhoto = document.getElementById("capturePhoto");
+const stopCamera = document.getElementById("stopCamera");
+
+const preview = document.getElementById("preview");
+const scannerStatus = document.getElementById("scannerStatus");
+
+let camera;
 
 
+// Open the scanner
+openScanner.onclick = () => scannerModal.hidden = false;
+
+
+// Stop the camera
+function closeCamera() {
+    if (camera) {
+        camera.getTracks().forEach(track => track.stop());
+        camera = null;
+    }
+
+    cameraPanel.hidden = true;
+    cameraVideo.srcObject = null;
+}
+
+
+// Close the scanner
+closeScanner.onclick = () => {
+    closeCamera();
+    scannerModal.hidden = true;
+};
+
+
+// Open the camera
+takePicture.onclick = async () => {
+    try {
+        closeCamera();
+
+        camera = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }
+        });
+
+        cameraVideo.srcObject = camera;
+        cameraPanel.hidden = false;
+        await cameraVideo.play();
+
+    } catch (error) {
+        scannerStatus.textContent = "Unable to open camera. Check permission or use Upload a Picture.";
+    }
+};
+
+
+// Capture the photo
+capturePhoto.onclick = () => {
+    const canvas = document.createElement("canvas");
+
+    canvas.width = cameraVideo.videoWidth;
+    canvas.height = cameraVideo.videoHeight;
+
+    canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+
+    canvas.toBlob(blob => {
+        if (!blob) return;
+
+        preview.src = URL.createObjectURL(blob);
+        preview.hidden = false;
+
+        scannerStatus.textContent = "Photo captured successfully!";
+        closeCamera();
+    }, "image/jpeg");
+};
+
+
+// Cancel camera
+stopCamera.onclick = closeCamera;
+
+
+// Upload a saved photo
+uploadPicture.onclick = () => {
+    closeCamera();
+    medicinePhoto.click();
+};
+
+
+// Preview uploaded photo
+medicinePhoto.onchange = () => {
+    const photo = medicinePhoto.files[0];
+
+    if (photo && photo.type.startsWith("image/")) {
+        preview.src = URL.createObjectURL(photo);
+        preview.hidden = false;
+        scannerStatus.textContent = "Photo uploaded successfully!";
+    }
+};*/
 
 const openScanner = document.getElementById("openScanner");
 const closeScanner = document.getElementById("closeScanner");
@@ -124,29 +226,92 @@ const medicinePhoto = document.getElementById("medicinePhoto");
 const preview = document.getElementById("preview");
 const scannerStatus = document.getElementById("scannerStatus");
 
-openScanner.addEventListener("click", function () {
-    scannerModal.hidden = false;
-});
+const takePicture = document.getElementById("takePicture");
+const uploadPicture = document.getElementById("uploadPicture");
+const cameraPanel = document.getElementById("cameraPanel");
+const cameraVideo = document.getElementById("cameraVideo");
 
-closeScanner.addEventListener("click", function () {
+let camera;
+
+// Open scanner
+openScanner.onclick = () => scannerModal.hidden = false;
+
+// Stop camera
+function stopCamera() {
+    if (camera) {
+        camera.getTracks().forEach(track => track.stop());
+        camera = null;
+    }
+
+    cameraVideo.srcObject = null;
+    cameraPanel.hidden = true;
+}
+
+// Close scanner
+closeScanner.onclick = () => {
+    stopCamera();
     scannerModal.hidden = true;
-});
+};
 
-medicinePhoto.addEventListener("change", function () {
+// Open phone camera or computer webcam
+takePicture.onclick = async () => {
+    try {
+        stopCamera();
+
+        camera = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+            audio: false
+        });
+
+        cameraVideo.srcObject = camera;
+        cameraPanel.hidden = false;
+        await cameraVideo.play();
+    } catch (error) {
+        scannerStatus.textContent =
+            "Camera unavailable. Allow camera access or upload a photo.";
+    }
+};
+
+// Capture photo
+document.getElementById("capturePhoto").onclick = () => {
+    if (!camera || !cameraVideo.videoWidth) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = cameraVideo.videoWidth;
+    canvas.height = cameraVideo.videoHeight;
+    canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+
+    canvas.toBlob(photo => {
+        if (!photo) return;
+
+        preview.src = URL.createObjectURL(photo);
+        preview.hidden = false;
+        scannerStatus.textContent = "Photo captured successfully!";
+        stopCamera();
+    }, "image/jpeg");
+};
+
+// Cancel camera
+document.getElementById("stopCamera").onclick = stopCamera;
+
+// Upload a saved photo
+uploadPicture.onclick = () => medicinePhoto.click();
+
+medicinePhoto.onchange = () => {
     const photo = medicinePhoto.files[0];
 
-    if (photo) {
+    if (photo && photo.type.startsWith("image/")) {
         preview.src = URL.createObjectURL(photo);
         preview.hidden = false;
         scannerStatus.textContent = "Photo selected successfully.";
     }
-});
+};
 
+// Open medicine details when preview is clicked
+preview.onclick = () => {
+    const medicineName = document.getElementById("search").value.trim();
 
-preview.addEventListener("click", function () {
-    const medicineName = search.value.trim();
-
-    if (medicineName === "") {
+    if (!medicineName) {
         alert("Please enter the medicine name before opening its details.");
         return;
     }
@@ -158,5 +323,5 @@ preview.addEventListener("click", function () {
         encodeURIComponent(medicineName) +
         "&sport=" + encodeURIComponent(sport) +
         "&country=" + encodeURIComponent(country);
-});
+};
 

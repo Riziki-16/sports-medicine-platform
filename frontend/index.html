@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,26 +98,95 @@
         </form>
     </div>
 
-    <div id="scannerModal" class="scanner-modal" hidden>
-        <div class="scanner-box">
-            <button type="button" id="closeScanner" class="close-scanner" aria-label="Close scanner">×</button>
+  
+<div id="scannerModal" class="scanner-modal" hidden>
 
-            <h3>Scan Your Medicine</h3>
-            <p>Upload a photo of your medicine to identify it.</p>
+    <div class="scanner-box">
 
-            <label for="medicinePhoto" class="upload-area">
-                <span class="upload-icon">📷</span>
-                <span>Choose a medicine image</span>
-                <small>Click here to upload a photo</small>
-            </label>
+        <button
+            type="button"
+            id="closeScanner"
+            class="close-scanner"
+            aria-label="Close scanner">
+            &times;
+        </button>
 
-            <input type="file" id="medicinePhoto" accept="image/*" capture="environment" hidden>
+        <h3>Check Your Medicine</h3>
 
-            <img id="preview" alt="Medicine photo preview" hidden>
+        <p>Take a picture of your medicine or choose a saved photo.</p>
 
-            <p id="scannerStatus"></p>
+        
+        <div class="scanner-options">
+
+            <button
+                type="button"
+                id="takePicture"
+                class="scanner-option">
+
+                <span class="scanner-icon">📷</span>
+
+                <h4>Take a Picture</h4>
+
+                <p>Use your camera to capture your medicine.</p>
+
+                <span class="option-action">Open Camera</span>
+
+            </button>
+
+            <button
+                type="button"
+                id="uploadPicture"
+                class="scanner-option">
+
+                <span class="scanner-icon">📁</span>
+
+                <h4>Upload a Picture</h4>
+
+                <p>Choose a medicine photo saved on your device.</p>
+
+                <span class="option-action">Browse Files</span>
+
+            </button>
+
         </div>
+
+        
+        <div id="cameraPanel" hidden>
+
+            <video
+                id="cameraVideo"
+                autoplay
+                playsinline>
+            </video>
+
+            <div class="camera-controls">
+
+                <button type="button" id="capturePhoto">
+                    Capture Photo
+                </button>
+
+                <button type="button" id="stopCamera">
+                    Cancel
+                </button>
+
+            </div>
+
+        </div>
+
+        <input type="file" id="medicinePhoto"accept="image/*" hidden>
+        <img id="preview" alt="Medicine photo preview" hidden>
+        <p id="scannerStatus" aria-live="polite"></p>
+
     </div>
+
+</div>
+
+        <input type="file" id="medicinePhoto" accept="image/*" capture="environment" hidden>
+        <img id="preview" alt="Medicine photo preview" hidden>
+        <p id="scannerStatus"></p>
+
+    </div>
+</div>
 
     <datalist id="medicineNames">
         <option value="Paracetamol">
