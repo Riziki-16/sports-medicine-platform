@@ -204,6 +204,41 @@ nav a:hover {
     align-items: center;
 }
 
+
+.classification-section {
+    background: rgba(5, 20, 22, 0.88);
+    margin: 18px 0;
+    padding: 20px 25px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+}
+
+.classification-section h2 {
+    color: #00b956;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 18px;
+    text-align: center;
+    text-shadow: none;
+}
+
+.classification-card {
+    background: #f5f5f5;
+    padding: 18px 22px;
+    border-radius: 12px;
+    border-left: 6px solid #087b4b;
+    box-shadow: none;
+}
+
+.classification-card p {
+    color: #263238;
+    font-size: 16px;
+    margin: 0;
+    line-height: 1.5;
+    text-shadow: none;
+}
+
 .information-section {
 
     margin-top: 30px;
