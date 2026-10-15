@@ -55,11 +55,18 @@ db.getConnection()
     m.medicine_name AS search_for,
     TRIM(s.chemical_name) AS ingredient,
     GROUP_CONCAT(DISTINCT sn.other_name SEPARATOR ', ') AS other_names,
-    GROUP_CONCAT(
-    DISTINCT b.brand_name
-    ORDER BY b.brand_name
-    SEPARATOR ', '
+    (
+    SELECT GROUP_CONCAT(
+        DISTINCT bg.brand_name
+        ORDER BY bg.brand_name
+        SEPARATOR ', '
+    )
+    FROM brands bg
+    JOIN substances sg
+        ON sg.substance_id = bg.substance_id
+    WHERE TRIM(sg.chemical_name) = TRIM(s.chemical_name)
 ) AS brand_names,
+
 
 (
     SELECT JSON_ARRAYAGG(
@@ -90,9 +97,6 @@ db.getConnection()
 
     LEFT JOIN substance_names sn
         ON s.substance_id = sn.substance_id
-
-    LEFT JOIN brands b
-    ON b.medicine_id = m.medicine_id
 
     LEFT JOIN dosages d
         ON s.substance_id = d.substance_id
