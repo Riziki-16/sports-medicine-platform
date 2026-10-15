@@ -52,8 +52,17 @@ db.getConnection()
     try {
        const [results] = await db.query(`
     SELECT
-    m.medicine_name AS search_for,
-    TRIM(s.chemical_name) AS ingredient,
+    COALESCE(
+    NULLIF(TRIM(m.medicine_name), ''),
+    NULLIF(TRIM(s.sub_chemical_name), ''),
+    (
+        SELECT MIN(bn.brand_name)
+        FROM brands bn
+        WHERE bn.substance_id = s.substance_id
+    ),
+    TRIM(s.chemical_name)
+) AS search_for,
+TRIM(s.chemical_name) AS ingredient,
     GROUP_CONCAT(DISTINCT sn.other_name SEPARATOR ', ') AS other_names,
     (
     SELECT GROUP_CONCAT(
@@ -87,13 +96,13 @@ db.getConnection()
     d.dosage_information AS dosage,
     w.warning_information AS warning
 
-    FROM medicines m
+    FROM substances s
 
-    LEFT JOIN medicine_substances ms
-        ON m.medicine_id = ms.medicine_id
+LEFT JOIN medicine_substances ms
+    ON s.substance_id = ms.substance_id
 
-    LEFT JOIN substances s
-        ON ms.substance_id = s.substance_id
+LEFT JOIN medicines m
+    ON ms.medicine_id = m.medicine_id
 
     LEFT JOIN substance_names sn
         ON s.substance_id = sn.substance_id
@@ -124,17 +133,23 @@ db.getConnection()
         ON r.country_id = c.country_id
 
     WHERE
-        m.medicine_name = ?
-        OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
-        OR sn.other_name = ?
-        OR EXISTS (
-    SELECT 1
-    FROM brands bsearch
-    WHERE bsearch.substance_id = s.substance_id
-      AND bsearch.brand_name LIKE CONCAT('%', ?, '%')
-)
-
-    GROUP BY
+    m.medicine_name = ?
+    OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
+    OR TRIM(COALESCE(s.sub_chemical_name, '')) = ?
+    OR EXISTS (
+        SELECT 1
+        FROM sub_chemical_names scsearch
+        WHERE scsearch.substance_id = s.substance_id
+          AND scsearch.sub_chemical_name LIKE CONCAT('%', ?, '%')
+    )
+    OR sn.other_name LIKE CONCAT('%', ?, '%')
+    OR EXISTS (
+        SELECT 1
+        FROM brands bsearch
+        WHERE bsearch.substance_id = s.substance_id
+          AND bsearch.brand_name LIKE CONCAT('%', ?, '%')
+          )
+     GROUP BY
         m.medicine_id,
         s.substance_id,
         sp.sports_id,
@@ -142,7 +157,7 @@ db.getConnection()
         r.status,
         d.dosage_information,
         w.warning_information
-`, [sport, country, medicine, medicine, medicine, medicine]);
+`, [sport, country, medicine, medicine, medicine, medicine, medicine, medicine]);
 
        res.json({
     totalResults: results.length,
