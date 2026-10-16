@@ -63,6 +63,10 @@ db.getConnection()
     TRIM(s.chemical_name)
 ) AS search_for,
 TRIM(s.chemical_name) AS ingredient,
+cat.category_name AS category,
+s.sub_chemical_name AS sub_chemical_name,
+sf.specific_code AS specific_code,
+sf.specific_name AS specific_name,
     GROUP_CONCAT(DISTINCT sn.other_name SEPARATOR ', ') AS other_names,
     (
     SELECT GROUP_CONCAT(
@@ -97,6 +101,11 @@ TRIM(s.chemical_name) AS ingredient,
     w.warning_information AS warning
 
     FROM substances s
+    LEFT JOIN categories cat
+    ON cat.category_id = s.category_id
+
+LEFT JOIN specifics sf
+    ON sf.specific_id = s.specific_id
 
 LEFT JOIN medicine_substances ms
     ON s.substance_id = ms.substance_id
@@ -133,22 +142,31 @@ LEFT JOIN medicines m
         ON r.country_id = c.country_id
 
     WHERE
-    m.medicine_name = ?
-    OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
-    OR TRIM(COALESCE(s.sub_chemical_name, '')) = ?
-    OR EXISTS (
+    s.category_id IS NOT NULL
+    AND EXISTS (
         SELECT 1
-        FROM sub_chemical_names scsearch
-        WHERE scsearch.substance_id = s.substance_id
-          AND scsearch.sub_chemical_name LIKE CONCAT('%', ?, '%')
+        FROM categories cat
+        WHERE cat.category_id = s.category_id
+          AND cat.category_name IN ('S1', 'S2', 'S3', 'S4', 'S5')
     )
-    OR sn.other_name LIKE CONCAT('%', ?, '%')
-    OR EXISTS (
-        SELECT 1
-        FROM brands bsearch
-        WHERE bsearch.substance_id = s.substance_id
-          AND bsearch.brand_name LIKE CONCAT('%', ?, '%')
-          )
+    AND (
+        m.medicine_name = ?
+        OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
+        OR TRIM(COALESCE(s.sub_chemical_name, '')) = ?
+        OR EXISTS (
+            SELECT 1
+            FROM sub_chemical_names scsearch
+            WHERE scsearch.substance_id = s.substance_id
+              AND scsearch.sub_chemical_name LIKE CONCAT('%', ?, '%')
+        )
+        OR sn.other_name LIKE CONCAT('%', ?, '%')
+        OR EXISTS (
+            SELECT 1
+            FROM brands bsearch
+            WHERE bsearch.substance_id = s.substance_id
+              AND bsearch.brand_name LIKE CONCAT('%', ?, '%')
+        )
+    )
      GROUP BY
         m.medicine_id,
         s.substance_id,
