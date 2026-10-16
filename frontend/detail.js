@@ -1,4 +1,3 @@
-
 /* GET SEARCH DETAILS FROM THE URL*/
   
 // Read the information passed from index.html
@@ -106,73 +105,35 @@ function displayStatus(elementId, status) {
 }
 
 
-/* FIND THE WADA CLASSIFICATION*/
-  
-
 
 function getWadaClassification(result) {
-    const possibleFields = [
-        "wada_classification",
-        "wadaClassification",
-        "wada_subcategory",
-        "wadaSubcategory",
-        "wada_category",
-        "wadaCategory",
-        "classification",
-        "classification_code",
-        "classificationCode",
-        "wada_class",
-        "wadaClass",
-        "prohibited_list_category",
-        "prohibitedListCategory"
-    ];
+    const category = result.category;
+    const specificCode = result.specific_code;
+    const specificName = result.specific_name;
 
-    // Check each possible field
-    for (const field of possibleFields) {
-        const value = result[field];
+    const classificationParts = [];
 
-        // Use the first available classification
-        if (value !== undefined && value !== null && value !== "") {
-
-            // Some APIs return several classifications
-            if (Array.isArray(value)) {
-                return value
-                    .map(item => {
-                        if (typeof item === "object" && item !== null) {
-                            return (
-                                item.code ||
-                                item.classification_code ||
-                                item.name ||
-                                item.category ||
-                                ""
-                            );
-                        }
-
-                        return item;
-                    })
-                    .filter(Boolean)
-                    .join(", ");
-            }
-
-            // Some APIs return a classification object
-            if (typeof value === "object") {
-                return (
-                    value.code ||
-                    value.classification_code ||
-                    value.name ||
-                    value.category ||
-                    "Classification format needs checking"
-                );
-            }
-
-            // Return the classification supplied by the API
-            return String(value);
-        }
+    // Add the main WADA category
+    if (category) {
+        classificationParts.push(category);
     }
 
-    // No recognised classification field was found
-    return "";
+    // Add the specific classification code
+    if (specificCode) {
+        classificationParts.push(specificCode);
+    }
+
+    // Add the specific classification name
+    if (specificName) {
+        classificationParts.push(specificName);
+    }
+
+    // Display all available classification information
+    return classificationParts.length
+        ? [...new Set(classificationParts)].join(" — ")
+        : "";
 }
+
 
 
 /* LOAD THE SELECTED MEDICINE*/
