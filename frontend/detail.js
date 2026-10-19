@@ -1,6 +1,5 @@
-/* GET SEARCH DETAILS FROM THE URL*/
-  
-// Read the information passed from index.html
+/* GET SEARCH DETAILS FROM THE URL */
+
 const params = new URLSearchParams(window.location.search);
 
 const ingredientParam = params.get("ingredient");
@@ -9,10 +8,8 @@ const countryParam = params.get("country");
 const searchDateParam = params.get("searchDate");
 
 
-/* CONNECT JAVASCRIPT TO HTML ELEMENTS*/
-  
+/* CONNECT JAVASCRIPT TO HTML */
 
-// Medicine details
 const medicineName = document.getElementById("medicineName");
 const otherNames = document.getElementById("otherNames");
 const ingredient = document.getElementById("ingredient");
@@ -21,25 +18,15 @@ const country = document.getElementById("country");
 const dosage = document.getElementById("dosage");
 const searchDate = document.getElementById("searchDate");
 
-// Conditions and warnings
 const warnings = document.getElementById("warnings");
+const wadaClassification = document.getElementById("wadaClassification");
 
-// WADA classification section
-const wadaClassification =
-    document.getElementById("wadaClassification");
-
-// In-competition and out-of-competition status cards
-const inCompetitionStatus =
-    document.getElementById("inCompetitionStatus");
-
-const outCompetitionStatus =
-    document.getElementById("outCompetitionStatus");
+const inCompetitionStatus = document.getElementById("inCompetitionStatus");
+const outCompetitionStatus = document.getElementById("outCompetitionStatus");
 
 
-/*  GET THE CURRENT SEARCH DATE*/
-   
+/* GET CURRENT DATE AND TIME */
 
-// Display the date and time using Kenya's time zone
 function getSearchDate() {
     const now = new Date();
 
@@ -55,49 +42,32 @@ function getSearchDate() {
 }
 
 
-/* DISPLAY THE STATUS COLOURS*/
-  
+/* DISPLAY STATUS COLOURS */
 
-// Change the colour and text according to the API status
 function displayStatus(elementId, status) {
     const element = document.getElementById(elementId);
     const card = element.closest(".status-card");
     const icon = card.querySelector(".status-icon");
 
-    // Remove the previous colour
     card.classList.remove("green", "amber", "red");
 
-    const cleanStatus = String(status ?? "")
-        .trim()
-        .toLowerCase();
+    status = String(status || "").trim().toLowerCase();
 
-    // Green means the substance is not prohibited
-    if (
-        ["green", "allowable", "allowed",
-         "not prohibited"].includes(cleanStatus)
-    ) {
+    if (["green", "allowable", "allowed", "not prohibited"].includes(status)) {
         card.classList.add("green");
         element.textContent = "Not Prohibited";
         icon.textContent = "✓";
 
-    // Amber means conditions apply
-    } else if (
-        ["amber", "conditional",
-         "allowed with conditions"].includes(cleanStatus)
-    ) {
+    } else if (["amber", "conditional", "allowed with conditions"].includes(status)) {
         card.classList.add("amber");
         element.textContent = "Allowed with Conditions";
         icon.textContent = "!";
 
-    // Red means the substance is prohibited
-    } else if (
-        ["red", "prohibited", "restricted"].includes(cleanStatus)
-    ) {
+    } else if (["red", "prohibited", "restricted"].includes(status)) {
         card.classList.add("red");
         element.textContent = "Prohibited";
         icon.textContent = "✕";
 
-    // Show a dash if the API has no status
     } else {
         element.textContent = "—";
         icon.textContent = "?";
@@ -105,56 +75,42 @@ function displayStatus(elementId, status) {
 }
 
 
+/* GET WADA CLASSIFICATION */
 
 function getWadaClassification(result) {
     const category = result.category;
-    const specificCode = result.specific_code;
-    const specificName = result.specific_name;
+    const code = result.specific_code;
+    const name = result.specific_name;
 
-    const classificationParts = [];
+    const parts = [];
 
-    // Add the main WADA category
     if (category) {
-        classificationParts.push(category);
+        parts.push(category);
     }
 
-    // Add the specific classification code
-    if (specificCode) {
-        classificationParts.push(specificCode);
+    if (code) {
+        parts.push(code);
     }
 
-    // Add the specific classification name
-    if (specificName) {
-        classificationParts.push(specificName);
+    if (name) {
+        parts.push(name);
     }
 
-    // Display all available classification information
-    return classificationParts.length
-        ? [...new Set(classificationParts)].join(" — ")
-        : "";
+    return parts.length ? [...new Set(parts)].join(" — ") : "";
 }
 
 
-
-/* LOAD THE SELECTED MEDICINE*/
+/* LOAD MEDICINE DETAILS */
 
 async function loadMedicineDetails() {
 
-    // Check whether a medicine was selected
     if (!ingredientParam) {
         medicineName.textContent = "Medicine Not Found";
         warnings.textContent = "No medicine was selected.";
         searchDate.textContent = getSearchDate();
-
-        if (wadaClassification) {
-            wadaClassification.textContent =
-                "No classification found.";
-        }
-
         return;
     }
 
-    // Display the basic search details while data loads
     medicineName.textContent = ingredientParam;
     ingredient.textContent = ingredientParam;
     sport.textContent = sportParam || "—";
@@ -162,73 +118,95 @@ async function loadMedicineDetails() {
     searchDate.textContent = searchDateParam || getSearchDate();
 
     try {
-
-        // Request the selected medicine from your existing API
         const response = await fetch(
             `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(ingredientParam)}&sport=${encodeURIComponent(sportParam || "")}&country=${encodeURIComponent(countryParam || "")}`
         );
 
-        // Check whether the request was successful
         if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
+            throw new Error("Unable to get medicine details");
         }
 
-        // Convert the API response into JavaScript data
         const data = await response.json();
 
-        // Keep this log to help us check the real API fields
         console.log("Detail API Response:", data);
 
-        // Get the first matching medicine
         const result = data.results?.[0];
 
-        // Handle a medicine that was not found
         if (!result) {
             otherNames.textContent = "—";
             dosage.textContent = "—";
             warnings.textContent = "No additional information found.";
 
             if (wadaClassification) {
-                wadaClassification.textContent =
-                    "No classification found.";
+                wadaClassification.textContent = "No classification found.";
             }
 
             displayStatus("inCompetitionStatus", "");
             displayStatus("outCompetitionStatus", "");
-
             return;
         }
 
+
         /* DISPLAY MEDICINE INFORMATION */
-           
 
-        // Display the medicine name from the database
         medicineName.textContent =
-            result.medicine_name ||
-            result.medicine ||
-            result.name ||
-            ingredientParam;
+            result.medicine_name || result.medicine || result.name || ingredientParam;
 
-        // Display the active ingredient
-        ingredient.textContent =
-            result.ingredient || ingredientParam;
+        ingredient.textContent = result.ingredient || ingredientParam;
 
-        // Display other names and brand names
-        const names = [
-            result.other_names,
-            result.brand_names
-        ]
-            .flatMap(value => Array.isArray(value) ? value : [value])
-            .filter(Boolean);
 
-        otherNames.textContent = names.length
-            ? names.join(", ")
-            : "—";
+        /* DISPLAY OTHER NAMES WITH IMAGES */
 
-        // Display dosage information
+
+let names = [];
+
+if (result.other_names) {
+    names = names.concat(result.other_names);
+}
+
+if (result.brand_names) {
+    names = names.concat(result.brand_names);
+}
+
+otherNames.innerHTML = "";
+
+names.forEach(function(name) {
+    const image = document.createElement("img");
+
+    image.alt = name;
+    image.width = 120;
+
+    const extensions = [".png", ".jpg", ".jpeg"];
+    let index = 0;
+
+    function loadImage() {
+        if (index < extensions.length) {
+            image.src = `images/${name}${extensions[index]}`;
+            index++;
+        } else {
+            image.style.display = "none";
+        }
+    }
+
+    image.onerror = loadImage;
+    loadImage();
+
+    const text = document.createElement("p");
+    text.textContent = name;
+
+    otherNames.appendChild(image);
+    otherNames.appendChild(text);
+});
+
+if (names.length === 0) {
+    otherNames.textContent = "—";
+}
+
+
+        /* DISPLAY DOSAGE AND WARNINGS */
+
         dosage.textContent = result.dosage || "—";
 
-        // Display any warnings or conditions
         warnings.textContent =
             result.warnings ||
             result.warning ||
@@ -236,65 +214,50 @@ async function loadMedicineDetails() {
             "No specific warnings provided.";
 
 
-        /*DISPLAY WADA CLASSIFICATION*/
-          
+        /* DISPLAY WADA CLASSIFICATION */
 
-        // Get the classification supplied by the API
         const classification = getWadaClassification(result);
 
-        // Display the classification beneath the status cards
         if (wadaClassification) {
             wadaClassification.textContent =
                 classification || "No classification found.";
         }
 
 
-        /* DISPLAY COMPETITION STATUS*/
+        /* DISPLAY COMPETITION STATUS */
 
-
-       
         const inStatus =
-            result.in_competition ??
-            result.inCompetition ??
-            result.in_competition_status ??
-            result.inCompetitionStatus ??
-            result.status ??
-            "";
+            result.in_competition ||
+            result.inCompetition ||
+            result.in_competition_status ||
+            result.inCompetitionStatus ||
+            result.status || "";
 
         const outStatus =
-            result.out_of_competition ??
-            result.outCompetition ??
-            result.out_of_competition_status ??
-            result.outOfCompetitionStatus ??
-            result.status ??
-            "";
+            result.out_of_competition ||
+            result.outCompetition ||
+            result.out_of_competition_status ||
+            result.outOfCompetitionStatus ||
+            result.status || "";
 
-        // Apply the appropriate status colours
         displayStatus("inCompetitionStatus", inStatus);
         displayStatus("outCompetitionStatus", outStatus);
 
     } catch (error) {
-
-        // Show errors in the browser console
         console.error("Detail Error:", error);
 
-        warnings.textContent =
-            "Unable to load medicine information.";
+        warnings.textContent = "Unable to load medicine information.";
 
         if (wadaClassification) {
-            wadaClassification.textContent =
-                "Unable to load classification.";
+            wadaClassification.textContent = "Unable to load classification.";
         }
 
-        // Leave the status unknown if the request fails
         displayStatus("inCompetitionStatus", "");
         displayStatus("outCompetitionStatus", "");
     }
 }
 
 
-
-    /*LOADING THE MEDICINE*/
-
+/* START LOADING THE MEDICINE */
 
 loadMedicineDetails();
