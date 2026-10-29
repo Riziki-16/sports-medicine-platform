@@ -27,7 +27,7 @@ form.addEventListener("submit", async function(event) {
 
         // Send the information to the backend
         const response = await fetch(
-            `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
+            `https://clean-sport-kenya-api.onrender.com/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
         );
 
 

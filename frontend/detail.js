@@ -119,7 +119,7 @@ async function loadMedicineDetails() {
 
     try {
         const response = await fetch(
-            `https://sports-medicine-platform-production.up.railway.app/search?medicine=${encodeURIComponent(ingredientParam)}&sport=${encodeURIComponent(sportParam || "")}&country=${encodeURIComponent(countryParam || "")}`
+           `https://clean-sport-kenya-api.onrender.com/search?medicine=${encodeURIComponent(ingredientParam)}&sport=${encodeURIComponent(sportParam || "")}&country=${encodeURIComponent(countryParam || "")}`
         );
 
         if (!response.ok) {
