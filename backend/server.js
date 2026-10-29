@@ -11,12 +11,20 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 
+const fs = require("fs");
+
 const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT
+    port: Number(process.env.DB_PORT),
+    ssl: {
+        ca: fs.readFileSync(__dirname + "/ca.pem")
+    },
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 app.get("/", function (req, res) {
@@ -147,11 +155,11 @@ LEFT JOIN medicines m
         SELECT 1
         FROM categories cat
         WHERE cat.category_id = s.category_id
-          AND cat.category_name IN ('S1', 'S2', 'S3', 'S4', 'S5')
+          AND cat.category_name REGEXP '^S[1-5]( |$)'
     )
     AND (
-        m.medicine_name = ?
-        OR TRIM(SUBSTRING_INDEX(s.chemical_name, ' (', 1)) = ?
+       m.medicine_name LIKE CONCAT('%', ?, '%')
+OR TRIM(s.chemical_name) LIKE CONCAT('%', ?, '%')
         OR TRIM(COALESCE(s.sub_chemical_name, '')) = ?
         OR EXISTS (
             SELECT 1
