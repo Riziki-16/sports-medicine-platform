@@ -8,10 +8,18 @@ const countryParam = params.get("country");
 const searchDateParam = params.get("searchDate");
 
 
+/* BACKEND IMAGE LOCATION */
+
+const API_URL = "https://clean-sport-kenya-api.onrender.com";
+
+const IMAGE_URL = `${API_URL}/images/`;
+
+
 /* CONNECT JAVASCRIPT TO HTML */
 
 const medicineName = document.getElementById("medicineName");
 const otherNames = document.getElementById("otherNames");
+
 const ingredient = document.getElementById("ingredient");
 const sport = document.getElementById("sport");
 const country = document.getElementById("country");
@@ -25,12 +33,25 @@ const inCompetitionStatus = document.getElementById("inCompetitionStatus");
 const outCompetitionStatus = document.getElementById("outCompetitionStatus");
 
 
+/* MEDICINE IMAGE ELEMENTS */
+
+const medicineImageViewer = document.getElementById("medicineImageViewer");
+
+const selectedMedicineName = document.getElementById("selectedMedicineName");
+
+const selectedMedicineImage = document.getElementById("selectedMedicineImage");
+
+const imageMessage = document.getElementById("imageMessage");
+
+
 /* GET CURRENT DATE AND TIME */
 
 function getSearchDate() {
+
     const now = new Date();
 
     return new Intl.DateTimeFormat("en-GB", {
+
         timeZone: "Africa/Nairobi",
         day: "2-digit",
         month: "short",
@@ -38,15 +59,20 @@ function getSearchDate() {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false
+
     }).format(now);
+
 }
 
 
 /* DISPLAY STATUS COLOURS */
 
 function displayStatus(elementId, status) {
+
     const element = document.getElementById(elementId);
+
     const card = element.closest(".status-card");
+
     const icon = card.querySelector(".status-icon");
 
     card.classList.remove("green", "amber", "red");
@@ -54,32 +80,48 @@ function displayStatus(elementId, status) {
     status = String(status || "").trim().toLowerCase();
 
     if (["green", "allowable", "allowed", "not prohibited"].includes(status)) {
+
         card.classList.add("green");
+
         element.textContent = "Not Prohibited";
+
         icon.textContent = "✓";
 
     } else if (["amber", "conditional", "allowed with conditions"].includes(status)) {
+
         card.classList.add("amber");
+
         element.textContent = "Allowed with Conditions";
+
         icon.textContent = "!";
 
     } else if (["red", "prohibited", "restricted"].includes(status)) {
+
         card.classList.add("red");
+
         element.textContent = "Prohibited";
+
         icon.textContent = "✕";
 
     } else {
+
         element.textContent = "—";
+
         icon.textContent = "?";
+
     }
+
 }
 
 
 /* GET WADA CLASSIFICATION */
 
 function getWadaClassification(result) {
+
     const category = result.category;
+
     const code = result.specific_code;
+
     const name = result.specific_name;
 
     const parts = [];
@@ -97,6 +139,170 @@ function getWadaClassification(result) {
     }
 
     return parts.length ? [...new Set(parts)].join(" — ") : "";
+
+}
+
+
+/* CONVERT MEDICINE NAME INTO IMAGE FILENAME */
+
+function getImageFileName(name) {
+
+    return name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+}
+
+
+/* DISPLAY MEDICINE IMAGE WHEN NAME IS CLICKED */
+
+function showMedicineImage(name) {
+
+    medicineImageViewer.hidden = false;
+
+    selectedMedicineName.textContent = name;
+
+    selectedMedicineImage.style.display = "none";
+
+    imageMessage.textContent = "Loading medicine image...";
+
+    const fileName = getImageFileName(name);
+
+    const extensions = [".jpg", ".png", ".jpeg"];
+
+    let index = 0;
+
+
+    function tryNextImage() {
+
+        if (index >= extensions.length) {
+
+            imageMessage.textContent =
+                "Image not available for " + name + ".";
+
+            selectedMedicineImage.style.display = "none";
+
+            return;
+
+        }
+
+        const imagePath =
+            IMAGE_URL + encodeURIComponent(fileName + extensions[index]);
+
+        index++;
+
+        selectedMedicineImage.src = imagePath;
+
+    }
+
+
+    selectedMedicineImage.onload = function() {
+
+        selectedMedicineImage.style.display = "block";
+
+        imageMessage.textContent = "Image loaded successfully.";
+
+    };
+
+
+    selectedMedicineImage.onerror = function() {
+
+        tryNextImage();
+
+    };
+
+
+    tryNextImage();
+
+}
+
+
+/* DISPLAY CLICKABLE OTHER NAMES */
+
+function displayOtherNames(result) {
+
+    let names = [];
+
+
+    // Get other names from the API
+
+    function addNames(value) {
+
+        if (!value) {
+            return;
+        }
+
+        if (Array.isArray(value)) {
+
+            names = names.concat(value);
+
+        } else if (typeof value === "string") {
+
+            names = names.concat(value.split(","));
+
+        }
+
+    }
+
+
+    addNames(result.other_names);
+
+    addNames(result.brand_names);
+
+
+    // Remove duplicates and empty names
+
+    names = [...new Set(
+
+        names
+            .map(name => String(name).trim())
+            .filter(name => name.length > 0)
+
+    )];
+
+
+    otherNames.innerHTML = "";
+
+
+    if (names.length === 0) {
+
+        otherNames.textContent = "—";
+
+        medicineImageViewer.hidden = true;
+
+        return;
+
+    }
+
+
+    // Create a clickable button for every name
+
+    names.forEach(function(name) {
+
+        const button = document.createElement("button");
+
+        button.type = "button";
+
+        button.className = "medicine-name-button";
+
+        button.textContent = name;
+
+
+        // Display the image when clicked
+
+        button.addEventListener("click", function() {
+
+            showMedicineImage(name);
+
+        });
+
+
+        otherNames.appendChild(button);
+
+    });
+
 }
 
 
@@ -105,109 +311,105 @@ function getWadaClassification(result) {
 async function loadMedicineDetails() {
 
     if (!ingredientParam) {
+
         medicineName.textContent = "Medicine Not Found";
+
         warnings.textContent = "No medicine was selected.";
+
         searchDate.textContent = getSearchDate();
+
         return;
+
     }
 
+
     medicineName.textContent = ingredientParam;
+
     ingredient.textContent = ingredientParam;
+
     sport.textContent = sportParam || "—";
+
     country.textContent = countryParam || "—";
+
     searchDate.textContent = searchDateParam || getSearchDate();
 
+
     try {
+
         const response = await fetch(
-           `https://clean-sport-kenya-api.onrender.com/search?medicine=${encodeURIComponent(ingredientParam)}&sport=${encodeURIComponent(sportParam || "")}&country=${encodeURIComponent(countryParam || "")}`
+
+            `${API_URL}/search?medicine=${encodeURIComponent(ingredientParam)}&sport=${encodeURIComponent(sportParam || "")}&country=${encodeURIComponent(countryParam || "")}`
+
         );
 
+
         if (!response.ok) {
+
             throw new Error("Unable to get medicine details");
+
         }
+
 
         const data = await response.json();
 
         console.log("Detail API Response:", data);
 
+
         const result = data.results?.[0];
 
+
         if (!result) {
+
             otherNames.textContent = "—";
+
             dosage.textContent = "—";
+
             warnings.textContent = "No additional information found.";
 
+            medicineImageViewer.hidden = true;
+
+
             if (wadaClassification) {
+
                 wadaClassification.textContent = "No classification found.";
+
             }
 
+
             displayStatus("inCompetitionStatus", "");
+
             displayStatus("outCompetitionStatus", "");
+
             return;
+
         }
 
 
         /* DISPLAY MEDICINE INFORMATION */
 
         medicineName.textContent =
-            result.medicine_name || result.medicine || result.name || ingredientParam;
+
+            result.medicine_name ||
+            result.medicine ||
+            result.name ||
+            ingredientParam;
+
 
         ingredient.textContent = result.ingredient || ingredientParam;
 
 
-        /* DISPLAY OTHER NAMES WITH IMAGES */
+        /* DISPLAY CLICKABLE OTHER NAMES */
 
-
-let names = [];
-
-if (result.other_names) {
-    names = names.concat(result.other_names);
-}
-
-if (result.brand_names) {
-    names = names.concat(result.brand_names);
-}
-
-otherNames.innerHTML = "";
-
-names.forEach(function(name) {
-    const image = document.createElement("img");
-
-    image.alt = name;
-    image.width = 120;
-
-    const extensions = [".png", ".jpg", ".jpeg"];
-    let index = 0;
-
-    function loadImage() {
-        if (index < extensions.length) {
-            image.src = `images/${name}${extensions[index]}`;
-            index++;
-        } else {
-            image.style.display = "none";
-        }
-    }
-
-    image.onerror = loadImage;
-    loadImage();
-
-    const text = document.createElement("p");
-    text.textContent = name;
-
-    otherNames.appendChild(image);
-    otherNames.appendChild(text);
-});
-
-if (names.length === 0) {
-    otherNames.textContent = "—";
-}
+        displayOtherNames(result);
 
 
         /* DISPLAY DOSAGE AND WARNINGS */
 
         dosage.textContent = result.dosage || "—";
 
+
         warnings.textContent =
+
             result.warnings ||
             result.warning ||
             result.conditions ||
@@ -218,43 +420,59 @@ if (names.length === 0) {
 
         const classification = getWadaClassification(result);
 
+
         if (wadaClassification) {
+
             wadaClassification.textContent =
+
                 classification || "No classification found.";
+
         }
 
 
         /* DISPLAY COMPETITION STATUS */
 
         const inStatus =
+
             result.in_competition ||
             result.inCompetition ||
             result.in_competition_status ||
             result.inCompetitionStatus ||
             result.status || "";
 
+
         const outStatus =
+
             result.out_of_competition ||
             result.outCompetition ||
             result.out_of_competition_status ||
             result.outOfCompetitionStatus ||
             result.status || "";
 
+
         displayStatus("inCompetitionStatus", inStatus);
+
         displayStatus("outCompetitionStatus", outStatus);
 
+
     } catch (error) {
+
         console.error("Detail Error:", error);
 
         warnings.textContent = "Unable to load medicine information.";
 
         if (wadaClassification) {
+
             wadaClassification.textContent = "Unable to load classification.";
+
         }
 
         displayStatus("inCompetitionStatus", "");
+
         displayStatus("outCompetitionStatus", "");
+
     }
+
 }
 
 

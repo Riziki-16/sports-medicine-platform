@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Clean Sport Kenya</title>
+
     <link rel="stylesheet" href="detail.css">
-    
 </head>
 
 <body>
@@ -17,121 +19,188 @@
         <a href="#">FAQS</a>
     </nav>
 
+    <main class="details-container">
 
-<main class="details-container">
+        <!-- OTHER MEDICINE NAMES -->
 
-    <div class="other-names">
-    <p>Other Names</p>
+        <div class="other-names">
 
-    <div id="otherNames" class="other-names-list">
-        —
-    </div>
-</div>
+            <p>Other Names</p>
 
-    <section class="status-section">
-
-        <h2>STATUS ACCORDING TO THE WADA PROHIBITED LIST</h2>
-        <div class="status-cards">
-
-    <div class="status-card" id="inCompetitionCard">
-        <div class="status-icon" id="inCompetitionIcon">✓</div>
-        <h3>In Competition</h3>
-        <p id="inCompetitionStatus">—</p>
-    </div>
-
-    <div class="status-card" id="outCompetitionCard">
-        <div class="status-icon" id="outCompetitionIcon">✓</div>
-        <h3>Out of Competition</h3>
-        <p id="outCompetitionStatus">—</p>
-    </div>
-
-    </div>
-      
-    <section class="classification-section">
-        <h2>WADA Classification(s)</h2>
-        <div class="classification-card">
-            <p id="wadaClassification">—</p>
-        </div>
-    </section>
-  
-        
-
-    </section>
-
-    <section class="warning-section">
-
-        <h2>Conditions / Warnings</h2>
-        <div class="warning-card">
-            <p id="warnings">—</p>
-
-        </div>
-
-    </section>
-  <section class="information-section">
-    <h2>Medicine Information</h2>
-    <div class="information-card">
-
-        <div class="information-row">
-            <span>Medicine Name</span>
-            <strong id="medicineName">—</strong>
-        </div>
-
-
-
-            <div class="information-row">
-                <span>Ingredient</span>
-                <strong id="ingredient">—</strong>
-
+            <div id="otherNames" class="other-names-list">
+                —
             </div>
 
+            <!-- SELECTED MEDICINE IMAGE -->
 
-            <div class="information-row">
-                <span>Sport</span>
-                <strong id="sport">—</strong>
+            <div id="medicineImageViewer" class="medicine-image-viewer" hidden>
 
-            </div>
+                <h3 id="selectedMedicineName">Medicine Image</h3>
 
+                <img id="selectedMedicineImage"
+                     src=""
+                     alt="Selected medicine image">
 
-            <div class="information-row">
-
-                <span>Nation of Purchase</span>
-                <strong id="country">—</strong>
-
-            </div>
-
-
-            <div class="information-row">
-
-                <span>Dosage</span>
-                <strong id="dosage">—</strong>
-
-            </div>
-
-            <div class="information-row">
-
-                <span>Search Date</span>
-                <strong id="searchDate">—</strong>
+                <p id="imageMessage">
+                    Select a medicine name to view its image.
+                </p>
 
             </div>
 
         </div>
 
-    </section>
 
-    <button class="back-button" onclick="window.location.href='index.html'">
+        <!-- WADA STATUS SECTION -->
 
-        Back to Search
+        <section class="status-section">
 
-    </button>
+            <h2>STATUS ACCORDING TO THE WADA PROHIBITED LIST</h2>
+
+            <div class="status-cards">
+
+                <div class="status-card" id="inCompetitionCard">
+
+                    <div class="status-icon" id="inCompetitionIcon">✓</div>
+
+                    <h3>In Competition</h3>
+
+                    <p id="inCompetitionStatus">—</p>
+
+                </div>
 
 
-</main>    
+                <div class="status-card" id="outCompetitionCard">
+
+                    <div class="status-icon" id="outCompetitionIcon">✓</div>
+
+                    <h3>Out of Competition</h3>
+
+                    <p id="outCompetitionStatus">—</p>
+
+                </div>
+
+            </div>
+
+
+            <!-- WADA CLASSIFICATION -->
+
+            <section class="classification-section">
+
+                <h2>WADA Classification(s)</h2>
+
+                <div class="classification-card">
+
+                    <p id="wadaClassification">—</p>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- CONDITIONS AND WARNINGS -->
+
+        <section class="warning-section">
+
+            <h2>Conditions / Warnings</h2>
+
+            <div class="warning-card">
+
+                <p id="warnings">—</p>
+
+            </div>
+
+        </section>
+
+
+        <!-- MEDICINE INFORMATION -->
+
+        <section class="information-section">
+
+            <h2>Medicine Information</h2>
+
+            <div class="information-card">
+
+                <div class="information-row">
+
+                    <span>Medicine Name</span>
+
+                    <strong id="medicineName">—</strong>
+
+                </div>
+
+
+                <div class="information-row">
+
+                    <span>Ingredient</span>
+
+                    <strong id="ingredient">—</strong>
+
+                </div>
+
+
+                <div class="information-row">
+
+                    <span>Sport</span>
+
+                    <strong id="sport">—</strong>
+
+                </div>
+
+
+                <div class="information-row">
+
+                    <span>Nation of Purchase</span>
+
+                    <strong id="country">—</strong>
+
+                </div>
+
+
+                <div class="information-row">
+
+                    <span>Dosage</span>
+
+                    <strong id="dosage">—</strong>
+
+                </div>
+
+
+                <div class="information-row">
+
+                    <span>Search Date</span>
+
+                    <strong id="searchDate">—</strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- BACK BUTTON -->
+
+        <button class="back-button"
+                onclick="window.location.href='index.html'">
+
+            Back to Search
+
+        </button>
+
+    </main>
+
 
     <footer>
-    <p>&copy; 2026 Akili EdTech. All Rights Reserved.</p>
-</footer>
+
+        <p>&copy; 2026 Akili EdTech. All Rights Reserved.</p>
+
+    </footer>
+
 
     <script src="detail.js"></script>
 
 </body>
+
 </html>

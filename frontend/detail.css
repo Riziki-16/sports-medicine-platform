@@ -1,3 +1,4 @@
+/* GENERAL RESET */
 * {
     margin: 0;
     padding: 0;
@@ -7,21 +8,29 @@
 body {
     font-family: Arial, Helvetica, sans-serif;
     min-height: 100vh;
+
     background-image: url("kenyan sports.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
+
     color: white;
 }
+
+
+/* NAVIGATION */
 
 nav {
     width: 100%;
     padding: 15px 40px;
+
     background: #006b3c;
+
     display: flex;
     justify-content: center;
     gap: 35px;
+
     position: relative;
     z-index: 10;
 }
@@ -38,19 +47,28 @@ nav a:hover {
 }
 
 
+/* MAIN CONTAINER */
+
 .details-container {
     width: 90%;
     max-width: 1000px;
+
     margin: 30px auto;
     padding-bottom: 30px;
 }
 
+
+/* MEDICINE HEADER */
+
 .medicine-header {
     background: rgba(10, 25, 30, 0.92);
+
     padding: 25px;
     border-radius: 16px;
     margin-bottom: 25px;
+
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+
     border-left: 6px solid #006b3c;
 }
 
@@ -60,32 +78,138 @@ nav a:hover {
     color: white;
 }
 
-.other-names p {
+
+/* OTHER NAMES SECTION */
+
+.other-names {
+    width: 100%;
+
+    margin: 25px 0;
+    padding: 20px 25px;
+
+    background: rgba(10, 25, 30, 0.88);
+
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 6px solid #006b3c;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.35),
+        inset 0 0 20px rgba(255, 255, 255, 0.03);
+}
+
+.other-names > p {
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 12px;
     color: white;
+    font-size: 18px;
 }
 
 
-#otherNames {
+/* CLICKABLE MEDICINE NAMES */
+
+.other-names-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.medicine-name-button {
+    padding: 10px 18px;
+
+    background: rgba(0, 107, 60, 0.85);
+
+    color: white;
+    border: 1px solid #00a651;
+    border-radius: 8px;
+
+    font-size: 15px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.medicine-name-button:hover {
+    background: #00a651;
+    transform: translateY(-2px);
+}
+
+.medicine-name-button:focus-visible {
+    outline: 3px solid white;
+    outline-offset: 3px;
+}
+
+
+/* SELECTED MEDICINE IMAGE */
+
+.medicine-image-viewer {
+    margin-top: 25px;
+    padding: 20px;
+
+    background: rgba(5, 20, 22, 0.90);
+
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+
+    text-align: center;
+}
+
+.medicine-image-viewer h3 {
+    color: #00b956;
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+
+.medicine-image-viewer img {
+    display: block;
+
+    max-width: 100%;
+    width: 250px;
+    max-height: 250px;
+
+    object-fit: contain;
+
+    margin: 0 auto 12px;
+
+    background: white;
+    padding: 10px;
+
+    border-radius: 10px;
+}
+
+.medicine-image-viewer p {
     color: #dddddd;
+    font-size: 14px;
 }
+
+
+/* STATUS SECTION */
 
 .status-section {
     margin-top: 30px;
     margin-bottom: 30px;
+
     background: rgba(10, 25, 30, 0.88);
+
     padding: 30px;
     border-radius: 18px;
-    box-shadow:0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.03);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.35),
+        inset 0 0 20px rgba(255, 255, 255, 0.03);
+
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .status-section h2 {
     text-align: center;
     margin-bottom: 20px;
+
     font-size: 21px;
     color: white;
+
     text-shadow: 2px 2px 5px black;
 }
 
@@ -96,36 +220,53 @@ nav a:hover {
     flex-wrap: wrap;
 }
 
+
+/* STATUS CARDS */
+
 .status-card {
     width: 300px;
     min-height: 180px;
+
     padding: 25px;
     border-radius: 12px;
+
     text-align: center;
+
     background: rgba(255, 255, 255, 0.97);
+
     border: 3px solid #ccc;
+
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
     color: #222;
+
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .status-card:hover {
     transform: translateY(-3px);
+
     box-shadow: 0 7px 18px rgba(0, 0, 0, 0.30);
 }
-
 
 .status-icon {
     width: 52px;
     height: 52px;
+
     margin: 0 auto 15px;
+
     border-radius: 50%;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     font-size: 27px;
     font-weight: bold;
 }
+
+
+/* GREEN STATUS */
 
 .status-card.green {
     background: #198754;
@@ -143,6 +284,9 @@ nav a:hover {
     color: white;
 }
 
+
+/* AMBER STATUS */
+
 .status-card.amber {
     background: #f0ad00;
     border-color: #f0ad00;
@@ -158,6 +302,9 @@ nav a:hover {
 .status-card.amber p {
     color: white;
 }
+
+
+/* RED STATUS */
 
 .status-card.red {
     background: #dc3545;
@@ -175,98 +322,146 @@ nav a:hover {
     color: white;
 }
 
+
+/* WARNING SECTION */
+
 .warning-section {
     margin-top: 30px;
     margin-bottom: 30px;
+
     background: rgba(10, 25, 30, 0.88);
+
     padding: 30px;
     border-radius: 18px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.03);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.35),
+        inset 0 0 20px rgba(255, 255, 255, 0.03);
+
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .warning-section h2 {
     margin-bottom: 20px;
+
     color: #00a651;
     font-size: 27px;
+
     text-shadow: 1px 1px 3px black;
 }
 
 .warning-card {
     background: rgba(255, 255, 255, 0.96);
+
     border-left: 5px solid #f0ad00;
+
     padding: 20px;
     border-radius: 10px;
+
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
     color: #333;
+
     min-height: 70px;
+
     display: flex;
     align-items: center;
 }
 
 
+/* CLASSIFICATION SECTION */
+
 .classification-section {
     background: rgba(5, 20, 22, 0.88);
+
     margin: 18px 0;
     padding: 20px 25px;
+
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.12);
+
     box-shadow: none;
 }
 
 .classification-section h2 {
     color: #00b956;
+
     font-size: 24px;
     font-weight: bold;
+
     margin-bottom: 18px;
     text-align: center;
+
     text-shadow: none;
 }
 
 .classification-card {
     background: #f5f5f5;
+
     padding: 18px 22px;
+
     border-radius: 12px;
     border-left: 6px solid #087b4b;
+
     box-shadow: none;
 }
 
 .classification-card p {
     color: #263238;
+
     font-size: 16px;
     margin: 0;
+
     line-height: 1.5;
     text-shadow: none;
 }
 
-.information-section {
 
+/* MEDICINE INFORMATION */
+
+.information-section {
     margin-top: 30px;
     margin-bottom: 30px;
+
     background: rgba(10, 25, 30, 0.88);
+
     padding: 30px;
     border-radius: 18px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.03);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.35),
+        inset 0 0 20px rgba(255, 255, 255, 0.03);
+
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .information-section h2 {
     margin-bottom: 20px;
+
     color: #00a651;
     font-size: 27px;
+
     text-shadow: 1px 1px 3px black;
 }
 
+
+/* BACK BUTTON */
+
 .back-button {
     display: block;
+
     margin: 30px auto 0;
     padding: 12px 25px;
+
     border: none;
     border-radius: 7px;
+
     background: #006b3c;
     color: white;
+
     font-size: 15px;
     font-weight: bold;
+
     cursor: pointer;
 }
 
@@ -275,18 +470,29 @@ nav a:hover {
 }
 
 
+/* FOOTER */
+
 footer {
     position: relative;
     z-index: 1;
+
     width: 100%;
+
     margin-top: 25px;
     padding: 12px 20px;
+
     background: rgba(8, 15, 18, 0.88);
+
     border-top: 1px solid rgba(255, 255, 255, 0.18);
+
     text-align: center;
+
     color: rgba(255, 255, 255, 0.80);
     font-size: 12px;
 }
+
+
+/* MOBILE RESPONSIVENESS */
 
 @media (max-width: 650px) {
 
@@ -303,7 +509,6 @@ footer {
         width: 94%;
         margin-top: 20px;
     }
-
 
     .medicine-header {
         padding: 20px;
@@ -332,7 +537,21 @@ footer {
     }
 
     .information-row:nth-child(odd) {
-
         border-right: none;
     }
+
+    .medicine-name-button {
+        font-size: 14px;
+        padding: 9px 13px;
+    }
+
+    .medicine-image-viewer {
+        padding: 15px;
+    }
+
+    .medicine-image-viewer img {
+        width: 100%;
+        max-width: 250px;
+    }
+
 }
