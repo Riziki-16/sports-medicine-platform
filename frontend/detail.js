@@ -143,7 +143,7 @@ function getWadaClassification(result) {
 }
 
 
-/* CONVERT MEDICINE NAME INTO IMAGE FILENAME */
+/* CONVERT ANY MEDICINE NAME INTO A FILENAME */
 
 function getImageFileName(name) {
 
@@ -156,7 +156,7 @@ function getImageFileName(name) {
 }
 
 
-/* DISPLAY MEDICINE IMAGE WHEN NAME IS CLICKED */
+/* DISPLAY SELECTED MEDICINE IMAGE */
 
 function showMedicineImage(name) {
 
@@ -170,10 +170,14 @@ function showMedicineImage(name) {
 
     const fileName = getImageFileName(name);
 
-    const extensions = [".jpg", ".png", ".jpeg"];
+    // Image formats to check
+
+    const extensions = [".jpg", ".jpeg", ".png"];
 
     let index = 0;
 
+
+    // Try the next image format
 
     function tryNextImage() {
 
@@ -198,14 +202,20 @@ function showMedicineImage(name) {
     }
 
 
+    // Display image when successfully loaded
+
     selectedMedicineImage.onload = function() {
 
         selectedMedicineImage.style.display = "block";
+
+        selectedMedicineImage.alt = name + " medicine image";
 
         imageMessage.textContent = "Image loaded successfully.";
 
     };
 
+
+    // Try another format if the image is not found
 
     selectedMedicineImage.onerror = function() {
 
@@ -213,6 +223,8 @@ function showMedicineImage(name) {
 
     };
 
+
+    // Start searching for the image
 
     tryNextImage();
 
@@ -226,7 +238,7 @@ function displayOtherNames(result) {
     let names = [];
 
 
-    // Get other names from the API
+    // Get alternative names from the API
 
     function addNames(value) {
 
@@ -252,7 +264,7 @@ function displayOtherNames(result) {
     addNames(result.brand_names);
 
 
-    // Remove duplicates and empty names
+    // Remove duplicate and empty names
 
     names = [...new Set(
 
@@ -277,7 +289,7 @@ function displayOtherNames(result) {
     }
 
 
-    // Create a clickable button for every name
+    // Create a clickable button for every alternative name
 
     names.forEach(function(name) {
 
@@ -290,7 +302,7 @@ function displayOtherNames(result) {
         button.textContent = name;
 
 
-        // Display the image when clicked
+        // Show the selected medicine image when clicked
 
         button.addEventListener("click", function() {
 
