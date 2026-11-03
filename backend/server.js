@@ -79,21 +79,24 @@ cat.category_name AS category,
 s.sub_chemical_name AS sub_chemical_name,
 sf.specific_code AS specific_code,
 sf.specific_name AS specific_name,
-    GROUP_CONCAT(DISTINCT sn.other_name SEPARATOR ', ') AS other_names,
-    (
+   GROUP_CONCAT(
+    DISTINCT sn.other_name
+    ORDER BY sn.other_name
+    SEPARATOR ', '
+) AS other_names,
+   (
     SELECT GROUP_CONCAT(
         DISTINCT bg.brand_name
         ORDER BY bg.brand_name
         SEPARATOR ', '
     )
     FROM brands bg
-    JOIN substances sg
-        ON sg.substance_id = bg.substance_id
-    WHERE TRIM(sg.chemical_name) = TRIM(s.chemical_name)
+    WHERE bg.medicine_id = m.medicine_id
 ) AS brand_names,
 
 
 (
+    
     SELECT JSON_ARRAYAGG(
         JSON_OBJECT(
             'brand_id', b2.brand_id,
@@ -104,7 +107,7 @@ sf.specific_name AS specific_name,
     FROM brands b2
     LEFT JOIN brand_images bi
         ON b2.brand_id = bi.brand_id
-    WHERE b2.substance_id = s.substance_id
+    WHERE b2.medicine_id = m.medicine_id
 ) AS brands,
     sp.sports_name AS sport,
     c.country_name AS country,
@@ -153,15 +156,8 @@ LEFT JOIN medicines m
     LEFT JOIN countries c
         ON r.country_id = c.country_id
 
-    WHERE
-    s.category_id IS NOT NULL
-    AND EXISTS (
-        SELECT 1
-        FROM categories cat
-        WHERE cat.category_id = s.category_id
-          AND cat.category_name REGEXP '^S[1-5]( |$)'
-    )
-    AND (
+   WHERE
+    (
        m.medicine_name LIKE CONCAT('%', ?, '%')
 OR TRIM(s.chemical_name) LIKE CONCAT('%', ?, '%')
         OR TRIM(COALESCE(s.sub_chemical_name, '')) = ?
