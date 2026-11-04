@@ -127,7 +127,10 @@ sf.specific_name AS specific_name,
 ) AS brands,
     sp.sports_name AS sport,
     c.country_name AS country,
-    COALESCE(r.status, 'Not classified') AS status,
+   CASE
+    WHEN s.category_id IS NOT NULL THEN 'Restricted'
+    ELSE COALESCE(r.status, 'Not classified')
+END AS status,
     d.dosage_information AS dosage,
     w.warning_information AS warning
 
