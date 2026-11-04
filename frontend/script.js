@@ -69,24 +69,38 @@ form.addEventListener("submit", async function(event) {
 
 
         // Display every medicine found
-        medicineResults.forEach(function(medicine, index) {
+      
+// Display each formulation only once
+const displayedFormulations = new Set();
+let formulationIndex = 0;
 
-            const name =
-                medicine.search_for ||
-                medicine.medicine_name ||
-                medicine.ingredient;
+medicineResults.forEach(function(medicine) {
+
+    const name =
+        medicine.search_for ||
+        medicine.medicine_name ||
+        medicine.ingredient;
+
+    // Skip duplicate formulations
+    if (!name || displayedFormulations.has(name)) {
+        return;
+    }
+
+    displayedFormulations.add(name);
+    formulationIndex++;
+
+output += `
+    <a
+        class="formulation-item"
+        href="detail.html?ingredient=${encodeURIComponent(name)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}"
+    >
+        ${formulationIndex}. ${name}
+    </a>
+`;
 
 
-            output += `
-                <a
-                    class="formulation-item"
-                    href="detail.html?ingredient=${encodeURIComponent(name)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}"
-                >
-                    ${index + 1}. ${name}
-                </a>
-            `;
+});
 
-        });
 
 
         // Close the results list
@@ -292,11 +306,16 @@ document.getElementById("capturePhoto").onclick = () => {
 };
 
 // Cancel camera
-document.getElementById("stopCamera").onclick = stopCamera;
+const stopCameraButton = document.getElementById("stopCamera");
 
-// Upload a saved photo
-uploadPicture.onclick = () => medicinePhoto.click();
+if (stopCameraButton) {
+    stopCameraButton.onclick = stopCamera;
+}
 
+/// Upload a saved photo
+if (uploadPicture && medicinePhoto) {
+    uploadPicture.onclick = () => medicinePhoto.click();
+}
 medicinePhoto.onchange = () => {
     const photo = medicinePhoto.files[0];
 

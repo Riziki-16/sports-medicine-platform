@@ -91,12 +91,19 @@ sf.specific_name AS specific_name,
         SEPARATOR ', '
     )
     FROM brands bg
-    WHERE bg.medicine_id = m.medicine_id
+    WHERE
+        bg.medicine_id = m.medicine_id
+        OR (
+            bg.substance_id = s.substance_id
+            AND NOT EXISTS (
+                SELECT 1
+                FROM brands bm
+                WHERE bm.medicine_id = m.medicine_id
+            )
+        )
 ) AS brand_names,
 
-
-(
-    
+    (
     SELECT JSON_ARRAYAGG(
         JSON_OBJECT(
             'brand_id', b2.brand_id,
@@ -107,7 +114,16 @@ sf.specific_name AS specific_name,
     FROM brands b2
     LEFT JOIN brand_images bi
         ON b2.brand_id = bi.brand_id
-    WHERE b2.medicine_id = m.medicine_id
+    WHERE
+        b2.medicine_id = m.medicine_id
+        OR (
+            b2.substance_id = s.substance_id
+            AND NOT EXISTS (
+                SELECT 1
+                FROM brands bm
+                WHERE bm.medicine_id = m.medicine_id
+            )
+        )
 ) AS brands,
     sp.sports_name AS sport,
     c.country_name AS country,
