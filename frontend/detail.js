@@ -12,8 +12,6 @@ const searchDateParam = params.get("searchDate");
 
 const API_URL = "https://clean-sport-kenya-api.onrender.com";
 
-const IMAGE_URL = `${API_URL}/images/`;
-
 
 /* CONNECT JAVASCRIPT TO HTML */
 
@@ -143,22 +141,13 @@ function getWadaClassification(result) {
 }
 
 
-/* CONVERT ANY MEDICINE NAME INTO A FILENAME */
-
-function getImageFileName(name) {
-
-    return name
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-
-}
-
-
 /* DISPLAY SELECTED MEDICINE IMAGE */
 
-function showMedicineImage(name) {
+let imageRequestId = 0;
+
+async function showMedicineImage(name) {
+
+    const requestId = ++imageRequestId;
 
     medicineImageViewer.hidden = false;
 
@@ -166,67 +155,75 @@ function showMedicineImage(name) {
 
     selectedMedicineImage.style.display = "none";
 
-    imageMessage.textContent = "Loading medicine image...";
+    imageMessage.textContent = "Searching for medicine image...";
 
-    const fileName = getImageFileName(name);
+    try {
 
-    // Image formats to check
+        // Ask the backend to find the correct image
 
-    const extensions = [".jpg", ".jpeg", ".png"];
+        const response = await fetch(
+            `${API_URL}/find-image?name=${encodeURIComponent(name)}`
+        );
 
-    let index = 0;
+        if (!response.ok) {
+            throw new Error("Image not found");
+        }
 
+        const data = await response.json();
 
-    // Try the next image format
+        // Ignore older image requests
 
-    function tryNextImage() {
+        if (requestId !== imageRequestId) {
+            return;
+        }
 
-        if (index >= extensions.length) {
+        // Display the image returned by the backend
 
-            imageMessage.textContent =
-                "Image not available for " + name + ".";
+        selectedMedicineImage.onload = function() {
+
+            if (requestId !== imageRequestId) {
+                return;
+            }
+
+            selectedMedicineImage.style.display = "block";
+
+            selectedMedicineImage.alt = name + " medicine image";
+
+            imageMessage.textContent = "Image loaded successfully.";
+
+        };
+
+        // Handle images that cannot load
+
+        selectedMedicineImage.onerror = function() {
+
+            if (requestId !== imageRequestId) {
+                return;
+            }
 
             selectedMedicineImage.style.display = "none";
 
-            return;
+            imageMessage.textContent =
+                "Unable to display medicine image.";
 
+        };
+
+        selectedMedicineImage.src = API_URL + data.imageUrl;
+
+    } catch (error) {
+
+        if (requestId !== imageRequestId) {
+            return;
         }
 
-        const imagePath =
-            IMAGE_URL + encodeURIComponent(fileName + extensions[index]);
+        console.log("Medicine image error:", error);
 
-        index++;
+        selectedMedicineImage.style.display = "none";
 
-        selectedMedicineImage.src = imagePath;
+        imageMessage.textContent =
+            "Image not available for " + name + ".";
 
     }
-
-
-    // Display image when successfully loaded
-
-    selectedMedicineImage.onload = function() {
-
-        selectedMedicineImage.style.display = "block";
-
-        selectedMedicineImage.alt = name + " medicine image";
-
-        imageMessage.textContent = "Image loaded successfully.";
-
-    };
-
-
-    // Try another format if the image is not found
-
-    selectedMedicineImage.onerror = function() {
-
-        tryNextImage();
-
-    };
-
-
-    // Start searching for the image
-
-    tryNextImage();
 
 }
 
@@ -401,6 +398,7 @@ async function loadMedicineDetails() {
 
         medicineName.textContent =
 
+            result.search_for ||
             result.medicine_name ||
             result.medicine ||
             result.name ||
