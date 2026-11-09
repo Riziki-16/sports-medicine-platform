@@ -88,10 +88,25 @@ GROUP_CONCAT(
 ) AS sub_chemical_name,
 sf.specific_code AS specific_code,
 sf.specific_name AS specific_name,
-   GROUP_CONCAT(
-    DISTINCT sn.other_name
-    ORDER BY sn.other_name
-    SEPARATOR ', '
+   (
+    SELECT GROUP_CONCAT(
+        DISTINCT names.other_name
+        ORDER BY names.other_name
+        SEPARATOR ', '
+    )
+    FROM (
+        SELECT TRIM(sn2.other_name) AS other_name
+        FROM substance_names sn2
+        WHERE sn2.substance_id = s.substance_id
+
+        UNION
+
+        SELECT TRIM(scn2.sub_chemical_name) AS other_name
+        FROM sub_chemical_names scn2
+        WHERE scn2.substance_id = s.substance_id
+    ) AS names
+    WHERE names.other_name IS NOT NULL
+      AND names.other_name <> ''
 ) AS other_names,
    (
     SELECT GROUP_CONCAT(
