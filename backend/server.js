@@ -4,6 +4,7 @@ const express = require("express");
 const mysql = require("mysql2/promise");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 
 
 const app = express();
@@ -13,9 +14,91 @@ app.use(cors());
 // MAKE MEDICINE IMAGES ACCESSIBLE TO THE FRONTEND
 app.use("/images", express.static(path.join(__dirname, "images")));
 
+// AUTOMATIC MEDICINE IMAGE SEARCH
+
+const imageFolder = path.join(__dirname, "images");
+
+// Convert filenames into a common format
+function normalizeImageName(name) {
+    return name
+        .toLowerCase()
+        .replace(/\.[^.]+$/, "")
+        .replace(/[^a-z0-9]/g, "");
+}
+
+// Find the correct medicine image
+app.get("/find-image", async function (req, res) {
+
+    const medicineName = req.query.name;
+
+    if (!medicineName) {
+        return res.status(400).json({
+            error: "Medicine name is required"
+        });
+    }
+
+    try {
+
+        const files = await fs.promises.readdir(imageFolder);
+
+        // Supported image formats
+        const allowedExtensions = [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".gif"
+        ];
+
+        // Ignore files that are not images
+        const imageFiles = files.filter(file =>
+            allowedExtensions.includes(path.extname(file).toLowerCase())
+        );
+
+        const searchName = normalizeImageName(medicineName);
+
+        // Handle different spellings of the same medicine
+        const aliases = {
+            betapyn: ["betayn"]
+        };
+
+        const possibleNames = [
+            searchName,
+            ...(aliases[searchName] || [])
+        ];
+
+        // Find an image with a matching filename
+        const matchedImage = imageFiles.find(file =>
+            possibleNames.includes(normalizeImageName(file))
+        );
+
+        if (!matchedImage) {
+            return res.status(404).json({
+                error: "Medicine image not found",
+                medicine: medicineName
+            });
+        }
+
+        res.json({
+            imageUrl: "/images/" + encodeURIComponent(matchedImage),
+            fileName: matchedImage
+        });
+
+    } catch (error) {
+
+        console.error("Image search error:", error);
+
+        res.status(500).json({
+            error: "Unable to search medicine images"
+        });
+
+    }
+
+});
+
 const PORT = process.env.PORT || 3000;
 
-const fs = require("fs");
+
 
 const db = mysql.createPool({
     host: process.env.DB_HOST,
@@ -35,9 +118,6 @@ app.get("/", function (req, res) {
     res.send("Sports Medicine API is running!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
 
 db.getConnection()
   .then(connection => {
@@ -215,4 +295,8 @@ OR TRIM(s.chemical_name) LIKE CONCAT('%', ?, '%')
             error: "Database search failed"
         });
     }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
