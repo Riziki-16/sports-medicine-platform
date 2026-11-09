@@ -146,7 +146,11 @@ db.getConnection()
     SELECT
     COALESCE(
     NULLIF(TRIM(m.medicine_name), ''),
-    NULLIF(TRIM(s.sub_chemical_name), ''),
+    (
+    SELECT MIN(TRIM(scn2.sub_chemical_name))
+    FROM sub_chemical_names scn2
+    WHERE scn2.substance_id = s.substance_id
+),
     (
         SELECT MIN(bn.brand_name)
         FROM brands bn
@@ -155,14 +159,34 @@ db.getConnection()
     TRIM(s.chemical_name)
 ) AS search_for,
 TRIM(s.chemical_name) AS ingredient,
+m.medicine_name AS medicine_name,
 cat.category_name AS category,
-s.sub_chemical_name AS sub_chemical_name,
+GROUP_CONCAT(
+    DISTINCT scn.sub_chemical_name
+    ORDER BY scn.sub_chemical_name
+    SEPARATOR ', '
+) AS sub_chemical_name,
 sf.specific_code AS specific_code,
 sf.specific_name AS specific_name,
-   GROUP_CONCAT(
-    DISTINCT sn.other_name
-    ORDER BY sn.other_name
-    SEPARATOR ', '
+   (
+    SELECT GROUP_CONCAT(
+        DISTINCT names.other_name
+        ORDER BY names.other_name
+        SEPARATOR ', '
+    )
+    FROM (
+        SELECT TRIM(sn2.other_name) AS other_name
+        FROM substance_names sn2
+        WHERE sn2.substance_id = s.substance_id
+
+        UNION
+
+        SELECT TRIM(scn2.sub_chemical_name) AS other_name
+        FROM sub_chemical_names scn2
+        WHERE scn2.substance_id = s.substance_id
+    ) AS names
+    WHERE names.other_name IS NOT NULL
+      AND names.other_name <> ''
 ) AS other_names,
    (
     SELECT GROUP_CONCAT(
@@ -229,6 +253,9 @@ LEFT JOIN medicines m
 
     LEFT JOIN substance_names sn
         ON s.substance_id = sn.substance_id
+
+        LEFT JOIN sub_chemical_names scn
+    ON s.substance_id = scn.substance_id
 
     LEFT JOIN dosages d
         ON s.substance_id = d.substance_id

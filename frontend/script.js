@@ -77,9 +77,9 @@ let formulationIndex = 0;
 medicineResults.forEach(function(medicine) {
 
     const name =
-        medicine.search_for ||
-        medicine.medicine_name ||
-        medicine.ingredient;
+    medicine.medicine_name ||
+    medicine.ingredient ||
+    medicine.search_for;
 
     // Skip duplicate formulations
     if (!name || displayedFormulations.has(name)) {
