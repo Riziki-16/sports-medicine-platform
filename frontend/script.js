@@ -26,8 +26,9 @@ form.addEventListener("submit", async function(event) {
     try {
 
         // Send the information to the backend
-        const response = await fetch(
-    `http://localhost:3000/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
+  // Send the information to the backend
+const response = await fetch(
+    `https://clean-sport-kenya-api.onrender.com/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
 );
 
         // Convert the response into JSON
