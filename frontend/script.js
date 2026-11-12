@@ -27,9 +27,8 @@ form.addEventListener("submit", async function(event) {
 
         // Send the information to the backend
         const response = await fetch(
-            `https://clean-sport-kenya-api.onrender.com/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
-        );
-
+    `http://localhost:3000/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
+);
 
         // Convert the response into JSON
         const data = await response.json();
@@ -70,16 +69,22 @@ form.addEventListener("submit", async function(event) {
 
         // Display every medicine found
       
+//
+// Display each formulation only once
+
 // Display each formulation only once
 const displayedFormulations = new Set();
 let formulationIndex = 0;
 
-medicineResults.forEach(function(medicine) {
+// Preserve the original search term
+const originalSearchTerm = String(medicine).trim().toLowerCase();
+
+medicineResults.forEach(function(result) {
 
     const name =
-    medicine.medicine_name ||
-    medicine.ingredient ||
-    medicine.search_for;
+        result.medicine_name ||
+        result.ingredient ||
+        result.search_for;
 
     // Skip duplicate formulations
     if (!name || displayedFormulations.has(name)) {
@@ -89,18 +94,35 @@ medicineResults.forEach(function(medicine) {
     displayedFormulations.add(name);
     formulationIndex++;
 
-output += `
-    <a
-        class="formulation-item"
-        href="detail.html?ingredient=${encodeURIComponent(name)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}"
-    >
-        ${formulationIndex}. ${name}
-    </a>
-`;
+    // Get brand names
+    const brandNames = typeof result.brand_names === "string"
+        ? result.brand_names.split(",").map(n => n.trim())
+        : [];
 
+    // Get alternative names
+    const otherNamesList = typeof result.other_names === "string"
+        ? result.other_names.split(",").map(n => n.trim())
+        : [];
 
+    // Check BOTH lists for the original search term
+    const allNames = [...brandNames, ...otherNamesList];
+
+    const matchedName = allNames.find(
+        n => n.toLowerCase() === originalSearchTerm
+    );
+
+    // Preserve the exact searched name when it matches
+    const detailIngredient = matchedName || name;
+
+    output += `
+        <a
+            class="formulation-item"
+            href="detail.html?ingredient=${encodeURIComponent(detailIngredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}"
+        >
+            ${formulationIndex}. ${name}
+        </a>
+    `;
 });
-
 
 
         // Close the results list

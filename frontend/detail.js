@@ -9,7 +9,6 @@ const searchDateParam = params.get("searchDate");
 
 
 /* BACKEND IMAGE LOCATION */
-
 const API_URL = "https://clean-sport-kenya-api.onrender.com";
 
 
@@ -114,13 +113,14 @@ function displayStatus(elementId, status) {
 
 /* GET WADA CLASSIFICATION */
 
+
+/* GET WADA CLASSIFICATION */
+
 function getWadaClassification(result) {
 
     const category = result.category;
-
     const code = result.specific_code;
-
-    const name = result.specific_name;
+    let name = result.specific_name;
 
     const parts = [];
 
@@ -129,6 +129,14 @@ function getWadaClassification(result) {
     }
 
     if (code) {
+        // Remove the code from the beginning of the name if already present
+        if (name && code) {
+            name = name.replace(
+                new RegExp("^" + code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*"),
+                ""
+            );
+        }
+
         parts.push(code);
     }
 
@@ -137,8 +145,8 @@ function getWadaClassification(result) {
     }
 
     return parts.length ? [...new Set(parts)].join(" — ") : "";
-
 }
+
 
 
 /* DISPLAY SELECTED MEDICINE IMAGE */
@@ -227,92 +235,76 @@ async function showMedicineImage(name) {
 
 }
 
-
 /* DISPLAY CLICKABLE OTHER NAMES */
-
 function displayOtherNames(result) {
 
-    let names = [];
-
-
-    // Get alternative names from the API
-
-    function addNames(value) {
-
-        if (!value) {
-            return;
-        }
-
+    function parseNames(value) {
         if (Array.isArray(value)) {
-
-            names = names.concat(value);
-
-        } else if (typeof value === "string") {
-
-            names = names.concat(value.split(","));
-
+            return value;
         }
 
+        if (typeof value === "string" && value.trim()) {
+            return value.split(",");
+        }
+
+        return [];
     }
 
+    // Get brand names and alternative names
+    const brandNames = parseNames(result.brand_names);
+    const otherNamesList = parseNames(result.other_names);
 
-    addNames(result.other_names);
-
-    addNames(result.brand_names);
-
-
-    // Remove duplicate and empty names
-
-    names = [...new Set(
-
-        names
-            .map(name => String(name).trim())
-            .filter(name => name.length > 0)
-
+    // Remove duplicates and empty values
+    const cleanNames = names => [...new Set(
+        names.map(name => String(name).trim()).filter(Boolean)
     )];
 
+    const brands = cleanNames(brandNames);
+    const alternatives = cleanNames(otherNamesList);
+
+    // Identify the original search term
+    const searchedTerm = String(ingredientParam || "")
+        .trim()
+        .toLowerCase();
+
+    // Check whether the searched term is a brand or alternative name
+    const matchedName = [...brands, ...alternatives].find(
+        name => name.toLowerCase() === searchedTerm
+    );
+
+    // Show only the searched name for brand searches.
+    // For chemical searches, show all associated names.
+    let names;
+
+    if (matchedName) {
+    names = [matchedName];
+} else {
+    names = cleanNames([...brands, ...alternatives]);
+}
 
     otherNames.innerHTML = "";
 
-
     if (names.length === 0) {
-
         otherNames.textContent = "—";
-
         medicineImageViewer.hidden = true;
-
         return;
-
     }
-
-
-    // Create a clickable button for every alternative name
 
     names.forEach(function(name) {
 
         const button = document.createElement("button");
-
         button.type = "button";
-
         button.className = "medicine-name-button";
-
         button.textContent = name;
 
-
-        // Show the selected medicine image when clicked
-
         button.addEventListener("click", function() {
-
             showMedicineImage(name);
-
         });
 
-
         otherNames.appendChild(button);
-
     });
-
 }
+
 
 
 /* LOAD MEDICINE DETAILS */

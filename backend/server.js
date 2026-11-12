@@ -144,49 +144,115 @@ db.getConnection()
     try {
        const [results] = await db.query(`
     SELECT
-    COALESCE(
+    
+COALESCE(
     NULLIF(TRIM(m.medicine_name), ''),
+
+    -- Use the sub-chemical linked to the searched brand
     (
-    SELECT MIN(TRIM(scn2.sub_chemical_name))
-    FROM sub_chemical_names scn2
-    WHERE scn2.substance_id = s.substance_id
-),
+        SELECT MIN(TRIM(scn2.sub_chemical_name))
+        FROM brands b2
+        JOIN brand_sub_chemicals bsc2
+            ON bsc2.brand_id = b2.brand_id
+        JOIN sub_chemical_names scn2
+            ON scn2.sub_chemical_id = bsc2.sub_chemical_id
+        WHERE b2.brand_name LIKE CONCAT('%', TRIM(?), '%')
+          AND b2.substance_id = s.substance_id
+    ),
+
+    -- Preserve the existing fallback for other searches
+    (
+        SELECT MIN(TRIM(scn2.sub_chemical_name))
+        FROM sub_chemical_names scn2
+        WHERE scn2.substance_id = s.substance_id
+    ),
+
     (
         SELECT MIN(bn.brand_name)
         FROM brands bn
         WHERE bn.substance_id = s.substance_id
     ),
+
     TRIM(s.chemical_name)
 ) AS search_for,
+
 TRIM(s.chemical_name) AS ingredient,
 m.medicine_name AS medicine_name,
 cat.category_name AS category,
-GROUP_CONCAT(
-    DISTINCT scn.sub_chemical_name
-    ORDER BY scn.sub_chemical_name
-    SEPARATOR ', '
+(
+    CASE
+        WHEN EXISTS (
+            SELECT 1
+            FROM brands bx
+            JOIN brand_sub_chemicals bcx
+                ON bcx.brand_id = bx.brand_id
+            WHERE bx.brand_name LIKE CONCAT('%', ?, '%')
+        )
+        THEN (
+            SELECT GROUP_CONCAT(
+                DISTINCT TRIM(scn3.sub_chemical_name)
+                ORDER BY scn3.sub_chemical_name
+                SEPARATOR ', '
+            )
+            FROM brand_sub_chemicals bsc3
+            JOIN brands b3
+                ON b3.brand_id = bsc3.brand_id
+            JOIN sub_chemical_names scn3
+                ON scn3.sub_chemical_id = bsc3.sub_chemical_id
+            WHERE b3.brand_name LIKE CONCAT('%', ?, '%')
+              AND b3.substance_id = s.substance_id
+        )
+        ELSE GROUP_CONCAT(
+            DISTINCT scn.sub_chemical_name
+            ORDER BY scn.sub_chemical_name
+            SEPARATOR ', '
+        )
+    END
 ) AS sub_chemical_name,
 sf.specific_code AS specific_code,
 sf.specific_name AS specific_name,
    (
-    SELECT GROUP_CONCAT(
-        DISTINCT names.other_name
-        ORDER BY names.other_name
-        SEPARATOR ', '
-    )
-    FROM (
-        SELECT TRIM(sn2.other_name) AS other_name
-        FROM substance_names sn2
-        WHERE sn2.substance_id = s.substance_id
+    CASE
+        WHEN EXISTS (
+            SELECT 1
+            FROM brands bx
+            JOIN brand_sub_chemicals bcx
+                ON bcx.brand_id = bx.brand_id
+            WHERE bx.brand_name LIKE CONCAT('%', ?, '%')
+        )
+        THEN (
+            SELECT GROUP_CONCAT(
+                DISTINCT TRIM(b3.brand_name)
+                ORDER BY b3.brand_name
+                SEPARATOR ', '
+            )
+            FROM brands b3
+            JOIN brand_sub_chemicals bsc
+                ON bsc.brand_id = b3.brand_id
+            WHERE b3.brand_name LIKE CONCAT('%', ?, '%')
+              AND b3.substance_id = s.substance_id
+        )
+        ELSE (
+            SELECT GROUP_CONCAT(
+                DISTINCT names.other_name
+                ORDER BY names.other_name
+                SEPARATOR ', '
+            )
+            FROM (
+                SELECT TRIM(sn2.other_name) AS other_name
+                FROM substance_names sn2
+                WHERE sn2.substance_id = s.substance_id
 
-        UNION
+                UNION
 
-        SELECT TRIM(scn2.sub_chemical_name) AS other_name
-        FROM sub_chemical_names scn2
-        WHERE scn2.substance_id = s.substance_id
-    ) AS names
-    WHERE names.other_name IS NOT NULL
-      AND names.other_name <> ''
+                SELECT TRIM(scn2.sub_chemical_name) AS other_name
+                FROM sub_chemical_names scn2
+                WHERE scn2.substance_id = s.substance_id
+            ) AS names
+            WHERE names.other_name IS NOT NULL
+              AND names.other_name <> ''
+        )
+    END
 ) AS other_names,
    (
     SELECT GROUP_CONCAT(
@@ -282,34 +348,74 @@ LEFT JOIN medicines m
     LEFT JOIN countries c
         ON r.country_id = c.country_id
 
-   WHERE
+  
+WHERE
+(
     (
-       m.medicine_name LIKE CONCAT('%', ?, '%')
-OR TRIM(s.chemical_name) LIKE CONCAT('%', ?, '%')
-        OR TRIM(COALESCE(s.sub_chemical_name, '')) = ?
-        OR EXISTS (
+        EXISTS (
             SELECT 1
-            FROM sub_chemical_names scsearch
-            WHERE scsearch.substance_id = s.substance_id
-              AND scsearch.sub_chemical_name LIKE CONCAT('%', ?, '%')
+            FROM brands bmap
+            WHERE bmap.brand_name LIKE CONCAT('%', ?, '%')
         )
-        OR sn.other_name LIKE CONCAT('%', ?, '%')
-        OR EXISTS (
+        AND EXISTS (
             SELECT 1
-            FROM brands bsearch
-            WHERE bsearch.substance_id = s.substance_id
-              AND bsearch.brand_name LIKE CONCAT('%', ?, '%')
+            FROM brands bmatch
+            WHERE bmatch.brand_name LIKE CONCAT('%', ?, '%')
+              AND bmatch.substance_id = s.substance_id
+              AND (
+                  EXISTS (
+                      SELECT 1
+                      FROM brand_sub_chemicals bmatchsc
+                      WHERE bmatchsc.brand_id = bmatch.brand_id
+                  )
+                  OR TRIM(m.medicine_name) = TRIM(s.chemical_name)
+              )
         )
     )
-     GROUP BY
-        m.medicine_id,
-        s.substance_id,
-        sp.sports_id,
-        c.country_id,
-        r.status,
-        d.dosage_information,
-        w.warning_information
-`, [sport, country, medicine, medicine, medicine, medicine, medicine, medicine]);
+    OR
+    (
+        NOT EXISTS (
+            SELECT 1
+            FROM brands bmap
+            WHERE bmap.brand_name LIKE CONCAT('%', ?, '%')
+        )
+        AND (
+            m.medicine_name LIKE CONCAT('%', ?, '%')
+            OR TRIM(s.chemical_name) LIKE CONCAT('%', ?, '%')
+            OR TRIM(COALESCE(s.sub_chemical_name, '')) = ?
+            OR EXISTS (
+                SELECT 1
+                FROM sub_chemical_names scsearch
+                WHERE scsearch.substance_id = s.substance_id
+                  AND scsearch.sub_chemical_name LIKE CONCAT('%', ?, '%')
+            )
+            OR sn.other_name LIKE CONCAT('%', ?, '%')
+            OR EXISTS (
+                SELECT 1
+                FROM brands bsearch
+                WHERE bsearch.substance_id = s.substance_id
+                  AND bsearch.brand_name LIKE CONCAT('%', ?, '%')
+            )
+        )
+    )
+)
+
+GROUP BY
+    m.medicine_id,
+    s.substance_id,
+    sp.sports_id,
+    c.country_id,
+    r.status,
+    d.dosage_information,
+    w.warning_information
+`, [
+     medicine,
+    medicine, medicine, medicine, medicine,
+    sport, country,
+    medicine, medicine, medicine,
+    medicine, medicine, medicine,
+    medicine, medicine, medicine
+]);
 
        res.json({
     totalResults: results.length,
