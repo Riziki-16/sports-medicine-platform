@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "cors": "^2.8.6"
+    "cors": "^2.8.6",
+    "multer": "^2.5.0",
+    "tesseract.js": "^7.0.0"
   }
 }

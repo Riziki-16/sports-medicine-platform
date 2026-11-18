@@ -151,120 +151,15 @@ medicineResults.forEach(function(result) {
     }
 
 });
-/*
-const openScanner = document.getElementById("openScanner");
-const scannerModal = document.getElementById("scannerModal");
-const closeScanner = document.getElementById("closeScanner");
 
-const takePicture = document.getElementById("takePicture");
-const uploadPicture = document.getElementById("uploadPicture");
-const medicinePhoto = document.getElementById("medicinePhoto");
-
-const cameraPanel = document.getElementById("cameraPanel");
-const cameraVideo = document.getElementById("cameraVideo");
-const capturePhoto = document.getElementById("capturePhoto");
-const stopCamera = document.getElementById("stopCamera");
-
-const preview = document.getElementById("preview");
-const scannerStatus = document.getElementById("scannerStatus");
-
-let camera;
-
-
-// Open the scanner
-openScanner.onclick = () => scannerModal.hidden = false;
-
-
-// Stop the camera
-function closeCamera() {
-    if (camera) {
-        camera.getTracks().forEach(track => track.stop());
-        camera = null;
-    }
-
-    cameraPanel.hidden = true;
-    cameraVideo.srcObject = null;
-}
-
-
-// Close the scanner
-closeScanner.onclick = () => {
-    closeCamera();
-    scannerModal.hidden = true;
-};
-
-
-// Open the camera
-takePicture.onclick = async () => {
-    try {
-        closeCamera();
-
-        camera = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" }
-        });
-
-        cameraVideo.srcObject = camera;
-        cameraPanel.hidden = false;
-        await cameraVideo.play();
-
-    } catch (error) {
-        scannerStatus.textContent = "Unable to open camera. Check permission or use Upload a Picture.";
-    }
-};
-
-
-// Capture the photo
-capturePhoto.onclick = () => {
-    const canvas = document.createElement("canvas");
-
-    canvas.width = cameraVideo.videoWidth;
-    canvas.height = cameraVideo.videoHeight;
-
-    canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
-
-    canvas.toBlob(blob => {
-        if (!blob) return;
-
-        preview.src = URL.createObjectURL(blob);
-        preview.hidden = false;
-
-        scannerStatus.textContent = "Photo captured successfully!";
-        closeCamera();
-    }, "image/jpeg");
-};
-
-
-// Cancel camera
-stopCamera.onclick = closeCamera;
-
-
-// Upload a saved photo
-uploadPicture.onclick = () => {
-    closeCamera();
-    medicinePhoto.click();
-};
-
-
-// Preview uploaded photo
-medicinePhoto.onchange = () => {
-    const photo = medicinePhoto.files[0];
-
-    if (photo && photo.type.startsWith("image/")) {
-        preview.src = URL.createObjectURL(photo);
-        preview.hidden = false;
-        scannerStatus.textContent = "Photo uploaded successfully!";
-    }
-};*/
 
 const openScanner = document.getElementById("openScanner");
 const closeScanner = document.getElementById("closeScanner");
 const scannerModal = document.getElementById("scannerModal");
-const medicinePhoto = document.getElementById("medicinePhoto");
 const preview = document.getElementById("preview");
 const scannerStatus = document.getElementById("scannerStatus");
 
 const takePicture = document.getElementById("takePicture");
-const uploadPicture = document.getElementById("uploadPicture");
 const cameraPanel = document.getElementById("cameraPanel");
 const cameraVideo = document.getElementById("cameraVideo");
 
@@ -290,9 +185,12 @@ closeScanner.onclick = () => {
     scannerModal.hidden = true;
 };
 
-// Open phone camera or computer webcam
-takePicture.onclick = async () => {
+
+ // Open phone camera or computer webcam
+takePicture.onclick = async function () {
+
     try {
+
         stopCamera();
 
         camera = await navigator.mediaDevices.getUserMedia({
@@ -302,31 +200,85 @@ takePicture.onclick = async () => {
 
         cameraVideo.srcObject = camera;
         cameraPanel.hidden = false;
+
         await cameraVideo.play();
+
     } catch (error) {
+
         scannerStatus.textContent =
-            "Camera unavailable. Allow camera access or upload a photo.";
+            "Camera unavailable. Please allow camera access and try again.";
+
     }
+
 };
 
-// Capture photo
-document.getElementById("capturePhoto").onclick = () => {
+
+ // Capture photo and read medicine text
+document.getElementById("capturePhoto").onclick = function () {
+
     if (!camera || !cameraVideo.videoWidth) return;
 
     const canvas = document.createElement("canvas");
+
     canvas.width = cameraVideo.videoWidth;
     canvas.height = cameraVideo.videoHeight;
+
     canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
 
-    canvas.toBlob(photo => {
+    canvas.toBlob(async function (photo) {
+
         if (!photo) return;
 
         preview.src = URL.createObjectURL(photo);
         preview.hidden = false;
-        scannerStatus.textContent = "Photo captured successfully!";
+
         stopCamera();
+
+        scannerStatus.textContent = "Reading medicine text...";
+
+        try {
+
+            const formData = new FormData();
+            formData.append("medicineImage", photo);
+
+            const response = await fetch(
+                "https://clean-sport-kenya-api.onrender.com/ocr",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            const result = await response.json();
+
+            if (result.success) {
+
+                document.getElementById("search").value =
+                    result.extractedText;
+
+                scannerStatus.textContent =
+                    "Text extracted successfully! Check the search field.";
+
+            } else {
+
+                scannerStatus.textContent =
+                    result.error || "Could not read the medicine label.";
+
+            }
+
+        } catch (error) {
+
+            scannerStatus.textContent =
+                "Unable to connect to the OCR service.";
+
+            console.log(error);
+
+        }
+
     }, "image/jpeg");
+
 };
+
 
 // Cancel camera
 const stopCameraButton = document.getElementById("stopCamera");
@@ -335,19 +287,6 @@ if (stopCameraButton) {
     stopCameraButton.onclick = stopCamera;
 }
 
-/// Upload a saved photo
-if (uploadPicture && medicinePhoto) {
-    uploadPicture.onclick = () => medicinePhoto.click();
-}
-medicinePhoto.onchange = () => {
-    const photo = medicinePhoto.files[0];
-
-    if (photo && photo.type.startsWith("image/")) {
-        preview.src = URL.createObjectURL(photo);
-        preview.hidden = false;
-        scannerStatus.textContent = "Photo selected successfully.";
-    }
-};
 
 // Open medicine details when preview is clicked
 preview.onclick = () => {

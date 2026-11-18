@@ -5,11 +5,28 @@ const mysql = require("mysql2/promise");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const multer = require("multer");
+const { createWorker } = require("tesseract.js");
 
 
 const app = express();
 
 app.use(cors());
+
+// CONFIGURE IMAGE UPLOAD FOR OCR
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+    fileFilter: (req, file, callback) => {
+        if (file.mimetype.startsWith("image/")) {
+            callback(null, true);
+        } else {
+            callback(new Error("Only image files are allowed"));
+        }
+    }
+});
 
 // MAKE MEDICINE IMAGES ACCESSIBLE TO THE FRONTEND
 app.use("/images", express.static(path.join(__dirname, "images")));
@@ -116,6 +133,56 @@ const db = mysql.createPool({
 
 app.get("/", function (req, res) {
     res.send("Sports Medicine API is running!");
+});
+
+
+// MEDICINE IMAGE TEXT RECOGNITION (OCR)
+
+app.post("/ocr", upload.single("medicineImage"), async function (req, res) {
+
+    if (!req.file) {
+        return res.status(400).json({
+            error: "Please capture a medicine image"
+        });
+    }
+
+    let worker;
+
+    try {
+
+        worker = await createWorker("eng");
+
+        const { data: { text } } = await worker.recognize(req.file.buffer);
+
+        console.log("OCR extracted text:", text);
+
+        if (!text || !text.trim()) {
+            return res.status(400).json({
+                error: "No readable text found. Please capture a clearer image."
+            });
+        }
+
+        res.json({
+            success: true,
+            extractedText: text.trim()
+        });
+
+    } catch (error) {
+
+        console.error("OCR error:", error);
+
+        res.status(500).json({
+            error: "Unable to read medicine image"
+        });
+
+    } finally {
+
+        if (worker) {
+            await worker.terminate();
+        }
+
+    }
+
 });
 
 
