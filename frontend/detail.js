@@ -238,6 +238,17 @@ async function showMedicineImage(name) {
 /* DISPLAY CLICKABLE OTHER NAMES */
 function displayOtherNames(result) {
 
+
+        // Do not display parent Salbutamol names for combination medicines
+    const medicineName = String(result.medicine_name || "").trim();
+
+    if (medicineName.includes("+")) {
+        otherNames.innerHTML = "";
+        otherNames.textContent = "—";
+        medicineImageViewer.hidden = true;
+        return;
+    }
+
     function parseNames(value) {
         if (Array.isArray(value)) {
             return value;
@@ -434,27 +445,39 @@ async function loadMedicineDetails() {
 
         /* DISPLAY COMPETITION STATUS */
 
-        const inStatus =
+       
+/* DISPLAY COMPETITION STATUS */
 
-            result.in_competition ||
-            result.inCompetition ||
-            result.in_competition_status ||
-            result.inCompetitionStatus ||
-            result.status || "";
+// Special condition for plain Salbutamol only
+const isPlainSalbutamol =
+    String(result.ingredient || "").trim().toLowerCase() === "salbutamol" &&
+    String(result.medicine_name || "").trim().toLowerCase() === "salbutamol";
 
+if (isPlainSalbutamol) {
 
-        const outStatus =
+    displayStatus("inCompetitionStatus", "conditional");
+    displayStatus("outCompetitionStatus", "conditional");
 
-            result.out_of_competition ||
-            result.outCompetition ||
-            result.out_of_competition_status ||
-            result.outOfCompetitionStatus ||
-            result.status || "";
+} else {
 
+    const inStatus =
+        result.in_competition ||
+        result.inCompetition ||
+        result.in_competition_status ||
+        result.inCompetitionStatus ||
+        result.status || "";
 
-        displayStatus("inCompetitionStatus", inStatus);
+    const outStatus =
+        result.out_of_competition ||
+        result.outCompetition ||
+        result.out_of_competition_status ||
+        result.outOfCompetitionStatus ||
+        result.status || "";
 
-        displayStatus("outCompetitionStatus", outStatus);
+    displayStatus("inCompetitionStatus", inStatus);
+    displayStatus("outCompetitionStatus", outStatus);
+}
+
 
 
     } catch (error) {
