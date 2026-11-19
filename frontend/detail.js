@@ -24,6 +24,12 @@ const dosage = document.getElementById("dosage");
 const searchDate = document.getElementById("searchDate");
 
 const warnings = document.getElementById("warnings");
+
+const monitoringSection =
+    document.getElementById("monitoringSection");
+
+const monitoringProgram =
+    document.getElementById("monitoringProgram");
 const wadaClassification = document.getElementById("wadaClassification");
 
 const inCompetitionStatus = document.getElementById("inCompetitionStatus");
@@ -427,6 +433,18 @@ async function loadMedicineDetails() {
             result.warning ||
             result.conditions ||
             "No specific warnings provided.";
+
+            // DISPLAY WADA MONITORING PROGRAM
+
+const monitoringText = result.monitoring_program;
+
+if (monitoringText && monitoringSection && monitoringProgram) {
+    monitoringProgram.textContent = monitoringText;
+    monitoringSection.hidden = false;
+} else if (monitoringSection && monitoringProgram) {
+    monitoringProgram.textContent = "";
+    monitoringSection.hidden = true;
+}
 
 
         /* DISPLAY WADA CLASSIFICATION */

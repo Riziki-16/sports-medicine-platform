@@ -555,3 +555,17 @@ footer {
     }
 
 }
+
+
+.monitoring-section {
+    margin-top: 20px;
+}
+
+.monitoring-section h2 {
+    margin-bottom: 12px;
+}
+
+#monitoringProgram {
+    white-space: pre-line;
+    line-height: 1.7;
+}

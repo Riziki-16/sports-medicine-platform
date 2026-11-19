@@ -449,7 +449,16 @@ sf.specific_name AS specific_name,
     ELSE COALESCE(r.status, 'Not classified')
 END AS status,
     d.dosage_information AS dosage,
-    w.warning_information AS warning
+    w.warning_information AS warning,
+
+(
+    SELECT GROUP_CONCAT(
+        DISTINCT mp.program_information
+        SEPARATOR '\n\n'
+    )
+    FROM monitoring_programs mp
+    WHERE mp.substance_id = s.substance_id
+) AS monitoring_program
 
     FROM substances s
     LEFT JOIN categories cat
