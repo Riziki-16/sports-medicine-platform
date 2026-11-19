@@ -142,54 +142,44 @@ function normalizeMedicineName(name) {
 
 async function findMedicineName(lines) {
 
-    // Get known medicine names from the database.
+    // Get medicine names from all four database tables.
     const [databaseNames] = await db.query(`
-        SELECT medicine_name AS name
-        FROM medicines
-        WHERE medicine_name IS NOT NULL
-        AND TRIM(medicine_name) <> ''
+        SELECT medicine_name AS name FROM medicines
+        WHERE medicine_name IS NOT NULL AND TRIM(medicine_name) <> ''
 
         UNION
 
-        SELECT brand_name AS name
-        FROM brands
-        WHERE brand_name IS NOT NULL
-        AND TRIM(brand_name) <> ''
+        SELECT brand_name AS name FROM brands
+        WHERE brand_name IS NOT NULL AND TRIM(brand_name) <> ''
 
         UNION
 
-        SELECT other_name AS name
-        FROM substance_names
-        WHERE other_name IS NOT NULL
-        AND TRIM(other_name) <> ''
+        SELECT other_name AS name FROM substance_names
+        WHERE other_name IS NOT NULL AND TRIM(other_name) <> ''
 
         UNION
 
-        SELECT sub_chemical_name AS name
-        FROM sub_chemical_names
-        WHERE sub_chemical_name IS NOT NULL
-        AND TRIM(sub_chemical_name) <> ''
+        SELECT sub_chemical_name AS name FROM sub_chemical_names
+        WHERE sub_chemical_name IS NOT NULL AND TRIM(sub_chemical_name) <> ''
     `);
 
-    // Normalize medicine names.
     const knownNames = databaseNames
-        .map(function(item) {
-            return {
-                name: String(item.name).trim(),
-                normalized: normalizeMedicineName(item.name)
-            };
-        })
-        .filter(function(item) {
-            return item.normalized.length >= 4;
-        });
+        .map(item => ({
+            name: String(item.name).trim(),
+            normalized: normalizeMedicineName(item.name)
+        }))
+        .filter(item => item.normalized.length >= 4);
 
-    // Calculate the difference between two strings.
+    // Calculate spelling differences.
     function levenshteinDistance(a, b) {
 
-        const matrix = [];
+        const matrix = Array.from(
+            { length: b.length + 1 },
+            () => []
+        );
 
         for (let i = 0; i <= b.length; i++) {
-            matrix[i] = [i];
+            matrix[i][0] = i;
         }
 
         for (let j = 0; j <= a.length; j++) {
@@ -212,152 +202,140 @@ async function findMedicineName(lines) {
         return matrix[b.length][a.length];
     }
 
-    // Store possible medicine matches.
     const matches = new Map();
 
-    // Examine each OCR line.
-    lines.forEach(function(line) {
+    // Examine every OCR line.
+    lines.forEach(line => {
 
         const originalText = String(line.text || "")
-            .replace(/\s+/g, " ")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, " ")
             .trim();
-
-        const normalizedLine = normalizeMedicineName(originalText);
 
         const lineConfidence = Number(line.confidence) || 0;
 
-        if (!normalizedLine) {
-            return;
-        }
+        if (!originalText) return;
 
-        // Break OCR text into individual words.
-        const words = originalText
-            .toLowerCase()
-            .match(/[a-z0-9]+/g) || [];
+        const words = originalText.split(/\s+/);
 
-        // Create groups of consecutive words.
-        const textParts = [normalizedLine];
+        // Create individual words and groups of up to four words.
+        const textParts = new Set();
 
-        for (let size = 1; size <= 4; size++) {
+        words.forEach(word => {
+            if (word.length >= 4) {
+                textParts.add(normalizeMedicineName(word));
+            }
+        });
+
+        for (let size = 2; size <= 4; size++) {
 
             for (let i = 0; i <= words.length - size; i++) {
 
-                const part = words
-                    .slice(i, i + size)
-                    .join("");
+                const part = words.slice(i, i + size).join("");
 
-                textParts.push(normalizeMedicineName(part));
+                textParts.add(normalizeMedicineName(part));
             }
         }
 
-        const uniqueParts = [...new Set(textParts)];
+        // Compare possible OCR words with database names.
+        knownNames.forEach(known => {
 
-        // Compare OCR text against database names.
-        knownNames.forEach(function(known) {
-
-            const medicineName = known.name;
-            const normalizedName = known.normalized;
-
-            let matchType = "";
             let bestScore = 0;
+            let matchType = "";
 
-            uniqueParts.forEach(function(part) {
+            textParts.forEach(part => {
 
                 if (!part) return;
 
-                let currentType = "";
-                let currentScore = 0;
+                if (part === known.normalized) {
 
-                // Exact match.
-                if (part === normalizedName) {
+                    bestScore = 100;
+                    matchType = "Exact match";
 
-                    currentType = "Exact match";
-                    currentScore = 100;
-
+                    return;
                 }
 
-                // Medicine name found inside a longer OCR line.
-                else if (
-                    normalizedName.length >= 5 &&
-                    normalizedLine.includes(normalizedName)
+                // Allow the medicine name to appear within a longer OCR word.
+                if (
+                    part.length >= known.normalized.length &&
+                    part.includes(known.normalized)
                 ) {
 
-                    currentType = "Text match";
-                    currentScore = 90;
+                    if (90 > bestScore) {
+                        bestScore = 90;
+                        matchType = "Text match";
+                    }
 
+                    return;
                 }
 
-                // Check for small OCR spelling mistakes.
-                else if (
-                    normalizedName.length >= 5 &&
-                    part.length >= 5
+                // Allow small spelling differences.
+                const lengthDifference = Math.abs(
+                    part.length - known.normalized.length
+                );
+
+                if (
+                    known.normalized.length >= 5 &&
+                    part.length >= 5 &&
+                    lengthDifference <= 2
                 ) {
 
                     const distance = levenshteinDistance(
                         part,
-                        normalizedName
+                        known.normalized
                     );
 
                     const allowedErrors =
-                        normalizedName.length >= 9 ? 2 : 1;
+                        known.normalized.length >= 9 ? 2 : 1;
 
                     if (distance <= allowedErrors) {
 
-                        currentType = "Close match";
+                        const score = 75 - distance * 10;
 
-                        currentScore = 75 -
-                            (distance * 10);
-
+                        if (score > bestScore) {
+                            bestScore = score;
+                            matchType = "Close match";
+                        }
                     }
-                }
-
-                if (currentScore > bestScore) {
-                    bestScore = currentScore;
-                    matchType = currentType;
                 }
             });
 
             if (!matchType) return;
 
-            // Include OCR confidence in the final score.
-            const score = bestScore + (lineConfidence * 0.2);
+            const finalScore = Math.round(
+                bestScore + (lineConfidence * 0.2)
+            );
 
-            // Avoid duplicate medicine suggestions.
-            const key = normalizeMedicineName(medicineName);
+            const key = known.normalized;
             const existing = matches.get(key);
 
-            if (!existing || score > existing.score) {
+            if (!existing || finalScore > existing.score) {
 
                 matches.set(key, {
-
-                    name: medicineName,
-
-                    score: Math.round(score),
-
+                    name: known.name,
+                    score: finalScore,
                     ocrConfidence: Math.round(lineConfidence),
-
                     matchType: matchType
-
                 });
             }
         });
     });
 
-    // Sort matches from strongest to weakest.
     const candidates = Array.from(matches.values())
-        .sort(function(a, b) {
-            return b.score - a.score;
-        })
+        .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
-    // Suggest the strongest database match.
-    const suggestedName = candidates.length > 0
-        ? candidates[0].name
-        : "";
+    // Do not automatically trust a weak or ambiguous match.
+    const suggestedName =
+        candidates.length > 0 && candidates[0].score >= 75
+            ? candidates[0].name
+            : "";
+
+    console.log("OCR matching candidates:", candidates);
 
     return {
-        suggestedName: suggestedName,
-        candidates: candidates
+        suggestedName,
+        candidates
     };
 }
 
