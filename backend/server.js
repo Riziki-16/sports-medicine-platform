@@ -136,13 +136,65 @@ app.get("/", function (req, res) {
 });
 
 
+// FIND A POSSIBLE MEDICINE NAME FROM THE OCR TEXT
+function findMedicineName(lines) {
+
+    const candidates = lines.map(function(line) {
+
+        let name = String(line.text || "")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        // Remove common medicine packaging words
+        name = name.replace(
+            /\b(tablets?|capsules?|syrup|oral|solution|mg|mcg|ml)\b/gi,
+            ""
+        );
+
+        // Remove dosage numbers
+        name = name.replace(/\b\d+(\.\d+)?\b/g, "");
+
+        name = name.replace(/[^a-zA-Z\s-]/g, "").trim();
+
+        return {
+            name: name,
+            confidence: Number(line.confidence) || 0
+        };
+
+    });
+
+    // Remove lines that are unlikely to contain a medicine name
+    const validNames = candidates.filter(function(item) {
+
+        return (
+            item.name.length >= 3 &&
+            item.name.length <= 35 &&
+            item.name.split(" ").length <= 4 &&
+            /[a-zA-Z]{3,}/.test(item.name)
+        );
+
+    });
+
+    // Choose the line with the highest recognition confidence
+    validNames.sort(function(a, b) {
+        return b.confidence - a.confidence;
+    });
+
+    return validNames.length > 0
+        ? validNames[0].name
+        : "";
+
+}
+
+
 // MEDICINE IMAGE TEXT RECOGNITION (OCR)
 
-app.post("/ocr", upload.single("medicineImage"), async function (req, res) {
+app.post("/ocr", upload.single("medicineImage"), async function(req, res) {
 
     if (!req.file) {
         return res.status(400).json({
-            error: "Please capture a medicine image"
+            success: false,
+            error: "Please capture a medicine image."
         });
     }
 
@@ -152,19 +204,46 @@ app.post("/ocr", upload.single("medicineImage"), async function (req, res) {
 
         worker = await createWorker("eng");
 
-        const { data: { text } } = await worker.recognize(req.file.buffer);
+        // Tell Tesseract to read text arranged in a block
+        await worker.setParameters({
+            tessedit_pageseg_mode: "6",
+            preserve_interword_spaces: "1"
+        });
+
+        // Read the uploaded medicine image
+        const result = await worker.recognize(req.file.buffer);
+
+        const text = result.data.text.trim();
+        const confidence = result.data.confidence;
 
         console.log("OCR extracted text:", text);
+        console.log("OCR confidence:", confidence);
 
-        if (!text || !text.trim()) {
+        if (!text) {
             return res.status(400).json({
-                error: "No readable text found. Please capture a clearer image."
+                success: false,
+                error: "No readable text found. Please take a clearer picture."
             });
         }
 
+        // Reject very poorly recognized images
+        if (confidence < 35) {
+            return res.status(422).json({
+                success: false,
+                error: "The image is unclear. Please focus your camera and try again."
+            });
+        }
+
+        // Find a possible medicine name
+        const suggestedName = findMedicineName(
+            result.data.lines || []
+        );
+
         res.json({
             success: true,
-            extractedText: text.trim()
+            extractedText: text,
+            suggestedName: suggestedName,
+            confidence: confidence
         });
 
     } catch (error) {
@@ -172,7 +251,8 @@ app.post("/ocr", upload.single("medicineImage"), async function (req, res) {
         console.error("OCR error:", error);
 
         res.status(500).json({
-            error: "Unable to read medicine image"
+            success: false,
+            error: "Unable to read medicine image."
         });
 
     } finally {
