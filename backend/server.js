@@ -203,6 +203,12 @@ async function findMedicineName(lines) {
     }
 
     const matches = new Map();
+    console.log("DATABASE MEDICINE NAMES:", knownNames.filter(item =>
+    item.normalized.includes("trumol")
+));
+
+    console.log("OCR LINES:", lines.map(line => line.text));
+    
 
     // Examine every OCR line.
     lines.forEach(line => {
