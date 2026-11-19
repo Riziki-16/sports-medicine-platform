@@ -137,6 +137,12 @@ function normalizeMedicineName(name) {
         .replace(/[^a-z0-9]/g, "");
 }
 
+console.log("FULL OCR TEXT:", result.data.text);
+
+console.log(
+    "OCR INDIVIDUAL LINES:",
+    (result.data.lines || []).map(line => line.text)
+);
 
 // IDENTIFY MEDICINE USING DATABASE
 
@@ -169,6 +175,9 @@ async function findMedicineName(lines) {
             normalized: normalizeMedicineName(item.name)
         }))
         .filter(item => item.normalized.length >= 4);
+    console.log(
+        "TRUMOL DATABASE CHECK:", knownNames.filter(item => item.normalized === "trumol")
+    );
 
     // Calculate spelling differences.
     function levenshteinDistance(a, b) {
