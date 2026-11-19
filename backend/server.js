@@ -400,13 +400,8 @@ app.post("/ocr", upload.single("medicineImage"), async function(req, res) {
             });
         }
 
-        // Reject very poorly recognized images
-        if (confidence < 35) {
-            return res.status(422).json({
-                success: false,
-                error: "The image is unclear. Please focus your camera and try again."
-            });
-        }
+       // Log OCR confidence but allow medicine identification to continue
+        console.log("OCR confidence:", confidence);
 
         // Find possible medicine names using the database
         const identification = await findMedicineName(
