@@ -1,8 +1,9 @@
+// GET HTML ELEMENTS
+
 const form = document.getElementById("searchForm");
 const search = document.getElementById("search");
 const userType = document.getElementById("userType");
 const results = document.getElementById("results");
-
 
 // SEARCH FOR MEDICINE
 
@@ -125,12 +126,13 @@ form.addEventListener("submit", async function(event) {
 
 });
 
-
 // CAMERA AND SCANNER
+
 
 const openScanner = document.getElementById("openScanner");
 const closeScanner = document.getElementById("closeScanner");
 const scannerModal = document.getElementById("scannerModal");
+
 const preview = document.getElementById("preview");
 const scannerStatus = document.getElementById("scannerStatus");
 
@@ -138,10 +140,16 @@ const takePicture = document.getElementById("takePicture");
 const cameraPanel = document.getElementById("cameraPanel");
 const cameraVideo = document.getElementById("cameraVideo");
 
-let camera;
+const capturePhoto = document.getElementById("capturePhoto");
+const stopCameraButton = document.getElementById("stopCamera");
 
+let camera = null;
+
+// Store the preview image URL so it can be released later.
+let previewObjectUrl = null;
 
 // OPEN SCANNER
+
 
 openScanner.onclick = function() {
 
@@ -149,15 +157,35 @@ openScanner.onclick = function() {
 
 };
 
+// CLEAR PREVIOUS IMAGE
+
+
+function clearPreview() {
+
+    if (previewObjectUrl) {
+
+        URL.revokeObjectURL(previewObjectUrl);
+
+        previewObjectUrl = null;
+
+    }
+
+    preview.src = "";
+    preview.hidden = true;
+
+}
 
 // STOP CAMERA
+
 
 function stopCamera() {
 
     if (camera) {
 
         camera.getTracks().forEach(function(track) {
+
             track.stop();
+
         });
 
         camera = null;
@@ -169,18 +197,23 @@ function stopCamera() {
 
 }
 
-
 // CLOSE SCANNER
+
 
 closeScanner.onclick = function() {
 
     stopCamera();
+
+    clearPreview();
+
     scannerModal.hidden = true;
+
+    scannerStatus.textContent = "";
 
 };
 
-
 // OPEN PHONE CAMERA OR COMPUTER WEBCAM
+
 
 takePicture.onclick = async function() {
 
@@ -188,25 +221,48 @@ takePicture.onclick = async function() {
 
         stopCamera();
 
+        clearPreview();
+
+        scannerStatus.textContent = "Opening camera...";
+
+        // Check whether the browser supports camera access.
+
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+
+            scannerStatus.textContent =
+                "Your browser does not support camera access. Please use a supported browser.";
+
+            return;
+
+        }
+
         camera = await navigator.mediaDevices.getUserMedia({
 
             video: {
+
                 facingMode: { ideal: "environment" },
+
                 width: { ideal: 1920 },
+
                 height: { ideal: 1080 }
+
             },
 
             audio: false
 
         });
 
-        // Request continuous autofocus where supported
+        // Request continuous autofocus where supported.
+
         const track = camera.getVideoTracks()[0];
 
         try {
 
             await track.applyConstraints({
+
                 advanced: [{ focusMode: "continuous" }]
+
             });
 
         } catch (error) {
@@ -216,48 +272,79 @@ takePicture.onclick = async function() {
         }
 
         cameraVideo.srcObject = camera;
+
         cameraPanel.hidden = false;
 
         await cameraVideo.play();
 
         scannerStatus.textContent =
-            "Point the camera at the medicine label and allow it to focus.";
+            "Point the camera at the medicine name and allow it to focus.";
 
     } catch (error) {
 
         console.log("Camera error:", error);
 
-        scannerStatus.textContent =
-            "Camera unavailable. Please allow camera access and try again.";
+        stopCamera();
+
+        if (error.name === "NotAllowedError") {
+
+            scannerStatus.textContent =
+                "Camera permission denied. Please allow camera access.";
+
+        } else if (error.name === "NotFoundError") {
+
+            scannerStatus.textContent =
+                "No camera was found on this device.";
+
+        } else {
+
+            scannerStatus.textContent =
+                "Camera unavailable. Please allow camera access and try again.";
+
+        }
 
     }
 
 };
 
 
+// =========================================
 // ENHANCE MEDICINE IMAGE BEFORE OCR
+// =========================================
 
 function enhanceImage(originalCanvas) {
 
     const canvas = document.createElement("canvas");
 
-    // Resize the image without making it excessively large
+    // Keep good image resolution.
+    // Avoid unnecessary shrinking of the original photograph.
+
+    const maxDimension = 2200;
+
     const scale = Math.min(
         1.5,
-        1600 / Math.max(originalCanvas.width, originalCanvas.height)
+        maxDimension / Math.max(
+            originalCanvas.width,
+            originalCanvas.height
+        )
     );
 
     canvas.width = Math.round(originalCanvas.width * scale);
+
     canvas.height = Math.round(originalCanvas.height * scale);
 
     const context = canvas.getContext("2d", {
+
         willReadFrequently: true
+
     });
 
     context.imageSmoothingEnabled = true;
+
     context.imageSmoothingQuality = "high";
 
-    // Draw and enlarge the original image
+    // Draw the original photograph.
+
     context.drawImage(
         originalCanvas,
         0,
@@ -266,7 +353,8 @@ function enhanceImage(originalCanvas) {
         canvas.height
     );
 
-    // Read the image pixels
+    // Read the image pixels.
+
     const imageData = context.getImageData(
         0,
         0,
@@ -276,60 +364,90 @@ function enhanceImage(originalCanvas) {
 
     const pixels = imageData.data;
 
-    // Convert the image to grayscale and improve contrast
-    for (let i = 0; i < pixels.length; i += 4) {
+    // -------------------------------------
+    // CHECK AVERAGE IMAGE BRIGHTNESS
+    // -------------------------------------
 
-        let gray =
+    let totalBrightness = 0;
+
+    let sampledPixels = 0;
+
+    // Sample pixels instead of checking every pixel.
+
+    for (let i = 0; i < pixels.length; i += 160) {
+
+        const brightness =
             0.299 * pixels[i] +
             0.587 * pixels[i + 1] +
             0.114 * pixels[i + 2];
 
-        gray = (gray - 128) * 1.4 + 133;
+        totalBrightness += brightness;
 
-        gray = Math.max(0, Math.min(255, gray));
-
-        pixels[i] = gray;
-        pixels[i + 1] = gray;
-        pixels[i + 2] = gray;
+        sampledPixels++;
 
     }
 
-    // Save the image before sharpening
-    const originalPixels = new Uint8ClampedArray(pixels);
+    const averageBrightness =
+        totalBrightness / sampledPixels;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    console.log(
+        "Original image brightness:",
+        averageBrightness
+    );
 
-    // Sharpen the medicine label
-    for (let y = 1; y < height - 1; y++) {
+    // APPLY GENTLE BRIGHTNESS CORRECTION
+    
 
-        for (let x = 1; x < width - 1; x++) {
+    let brightnessAdjustment = 0;
 
-            const i = (y * width + x) * 4;
+    if (averageBrightness < 90) {
 
-            const top = ((y - 1) * width + x) * 4;
-            const bottom = ((y + 1) * width + x) * 4;
-            const left = (y * width + x - 1) * 4;
-            const right = (y * width + x + 1) * 4;
+        brightnessAdjustment = 22;
 
-            const sharp =
-                originalPixels[i] * 5 -
-                originalPixels[top] -
-                originalPixels[bottom] -
-                originalPixels[left] -
-                originalPixels[right];
+    } else if (averageBrightness < 120) {
 
-            const value = Math.max(0, Math.min(255, sharp));
+        brightnessAdjustment = 12;
 
-            pixels[i] = value;
-            pixels[i + 1] = value;
-            pixels[i + 2] = value;
+    } else if (averageBrightness > 205) {
 
-        }
+        brightnessAdjustment = -5;
 
     }
 
-    // Put the improved image back on the canvas
+    // Apply only mild contrast correction.
+
+    const contrast = 1.06;
+
+
+    // IMPROVE IMAGE WITHOUT DESTROYING COLOUR
+    
+
+    for (let i = 0; i < pixels.length; i += 4) {
+
+        let red = pixels[i];
+
+        let green = pixels[i + 1];
+
+        let blue = pixels[i + 2];
+
+        red = (red - 128) * contrast + 128 + brightnessAdjustment;
+
+        green = (green - 128) * contrast + 128 + brightnessAdjustment;
+
+        blue = (blue - 128) * contrast + 128 + brightnessAdjustment;
+
+        // Keep all colour values within the valid range.
+
+        pixels[i] = Math.max(0, Math.min(255, red));
+
+        pixels[i + 1] = Math.max(0, Math.min(255, green));
+
+        pixels[i + 2] = Math.max(0, Math.min(255, blue));
+
+    }
+
+    // Save the enhanced image.
+
     context.putImageData(imageData, 0, 0);
 
     return canvas;
@@ -337,9 +455,35 @@ function enhanceImage(originalCanvas) {
 }
 
 
+// CONVERT CANVAS TO IMAGE FILE
+
+
+function canvasToBlob(canvas) {
+
+    return new Promise(function(resolve, reject) {
+
+        canvas.toBlob(function(blob) {
+
+            if (!blob) {
+
+                reject(new Error("Image conversion failed."));
+
+                return;
+
+            }
+
+            resolve(blob);
+
+        }, "image/jpeg", 0.95);
+
+    });
+
+}
+
 // CAPTURE PHOTO AND READ MEDICINE TEXT
 
-document.getElementById("capturePhoto").onclick = async function() {
+
+capturePhoto.onclick = async function() {
 
     if (!camera || !cameraVideo.videoWidth) {
 
@@ -350,75 +494,82 @@ document.getElementById("capturePhoto").onclick = async function() {
 
     }
 
-    const canvas = document.createElement("canvas");
+    // Prevent repeated captures while processing.
 
-    canvas.width = cameraVideo.videoWidth;
-    canvas.height = cameraVideo.videoHeight;
-
-    // Capture the original image
-    canvas.getContext("2d").drawImage(
-        cameraVideo,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+    capturePhoto.disabled = true;
 
     try {
 
-        scannerStatus.textContent =
-            "Enhancing medicine image...";
+        // CAPTURE ORIGINAL CAMERA IMAGE
+        
 
-        // Improve the image before sending it to OCR
+        const canvas = document.createElement("canvas");
+
+        canvas.width = cameraVideo.videoWidth;
+
+        canvas.height = cameraVideo.videoHeight;
+
+        const context = canvas.getContext("2d");
+
+        context.drawImage(
+            cameraVideo,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        scannerStatus.textContent =
+            "Processing medicine photograph...";
+
+        // PRESERVE ORIGINAL PHOTOGRAPH
+        
+
+        const originalPhoto = await canvasToBlob(canvas);
+
+        // CREATE ENHANCED COPY FOR OCR
+      
+
         const enhancedCanvas = enhanceImage(canvas);
 
-        // Convert the improved image into a file
-        const photo = await new Promise(function(resolve) {
+        const enhancedPhoto = await canvasToBlob(enhancedCanvas);
 
-            enhancedCanvas.toBlob(
-                resolve,
-                "image/jpeg",
-                0.95
-            );
+        // DISPLAY ORIGINAL IMAGE
+        
+        clearPreview();
 
-        });
+        previewObjectUrl = URL.createObjectURL(originalPhoto);
 
-        if (!photo) {
+        preview.src = previewObjectUrl;
 
-            scannerStatus.textContent =
-                "Unable to process the image.";
-
-            return;
-
-        }
-
-        // Display the enhanced image
-        if (preview.src.startsWith("blob:")) {
-            URL.revokeObjectURL(preview.src);
-        }
-
-        preview.src = URL.createObjectURL(photo);
         preview.hidden = false;
+
+        // Stop the camera after capturing.
 
         stopCamera();
 
         scannerStatus.textContent =
-            "Reading enhanced medicine image. Please wait...";
+            "Reading medicine label. Please wait...";
 
-        // Send the enhanced image to the backend
+        // SEND ENHANCED IMAGE TO BACKEND
+        
+
         const formData = new FormData();
 
         formData.append(
             "medicineImage",
-            photo,
+            enhancedPhoto,
             "medicine.jpg"
         );
 
         const response = await fetch(
             "https://clean-sport-kenya-api.onrender.com/ocr",
             {
+
                 method: "POST",
+
                 body: formData
+
             }
         );
 
@@ -426,29 +577,43 @@ document.getElementById("capturePhoto").onclick = async function() {
 
         console.log("OCR response:", result);
 
+        
+        // HANDLE OCR ERRORS
+        
+
         if (!response.ok || !result.success) {
 
             scannerStatus.textContent =
-                result.error || "Could not read the medicine label.";
+                result.error ||
+                "Could not read the medicine label. Please try another photograph.";
 
             return;
 
         }
 
-        // Display the suggested medicine name
-        if (result.suggestedName) {
+        // MEDICINE NAME IDENTIFICATION
+        
+        if (result.suggestedName &&
+            result.suggestedName.trim() !== "") {
+
+            // Automatically place the suggested name into the medicine search field.
 
             search.value = result.suggestedName;
 
             scannerStatus.textContent =
-                "Possible medicine name: " +
+                "Medicine identified: " +
                 result.suggestedName +
-                ". Please confirm before searching.";
+                ". Check the search field and tap Search.";
+
+            console.log(
+                "Suggested medicine:",
+                result.suggestedName
+            );
 
         } else {
 
             scannerStatus.textContent =
-                "Text detected, but medicine name not identified. Please enter it manually.";
+                "We could not identify the medicine name. Please take another photograph or enter the name manually.";
 
             console.log(
                 "Full extracted text:",
@@ -459,28 +624,39 @@ document.getElementById("capturePhoto").onclick = async function() {
 
     } catch (error) {
 
-        console.log("OCR error:", error);
+        console.log("OCR processing error:", error);
 
         scannerStatus.textContent =
-            "Unable to process the medicine image. Please try again.";
+            "Unable to process the medicine photograph. Please try again.";
+
+    } finally {
+
+        // Allow another capture when processing finishes.
+
+        capturePhoto.disabled = false;
 
     }
 
 };
 
-
 // CANCEL CAMERA
 
-const stopCameraButton = document.getElementById("stopCamera");
 
 if (stopCameraButton) {
 
-    stopCameraButton.onclick = stopCamera;
+    stopCameraButton.onclick = function() {
+
+        stopCamera();
+
+        scannerStatus.textContent =
+            "Camera closed. You can open it again when ready.";
+
+    };
 
 }
 
-
 // OPEN MEDICINE DETAILS WHEN PREVIEW IS CLICKED
+
 
 preview.onclick = function() {
 
@@ -495,6 +671,7 @@ preview.onclick = function() {
     }
 
     const sport = document.getElementById("sport").value;
+
     const country = document.getElementById("country").value;
 
     window.location.href =
