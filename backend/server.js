@@ -8,7 +8,6 @@ const fs = require("fs");
 const multer = require("multer");
 const { createWorker } = require("tesseract.js");
 
-
 const app = express();
 
 app.use(cors());
@@ -32,7 +31,6 @@ const upload = multer({
 app.use("/images", express.static(path.join(__dirname, "images")));
 
 // AUTOMATIC MEDICINE IMAGE SEARCH
-
 const imageFolder = path.join(__dirname, "images");
 
 // Convert filenames into a common format
@@ -55,7 +53,6 @@ app.get("/find-image", async function (req, res) {
     }
 
     try {
-
         const files = await fs.promises.readdir(imageFolder);
 
         // Supported image formats
@@ -102,21 +99,17 @@ app.get("/find-image", async function (req, res) {
         });
 
     } catch (error) {
-
         console.error("Image search error:", error);
 
         res.status(500).json({
             error: "Unable to search medicine images"
         });
-
     }
-
 });
 
 const PORT = process.env.PORT || 3000;
 
-
-
+// DATABASE CONNECTION
 const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -135,57 +128,144 @@ app.get("/", function (req, res) {
     res.send("Sports Medicine API is running!");
 });
 
+// NORMALIZE MEDICINE NAMES
 
-// FIND A POSSIBLE MEDICINE NAME FROM THE OCR TEXT
-function findMedicineName(lines) {
 
-    const candidates = lines.map(function(line) {
+function normalizeMedicineName(name) {
+    return String(name || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+}
 
-        let name = String(line.text || "")
+
+// IDENTIFY MEDICINE USING DATABASE
+
+
+async function findMedicineName(lines) {
+
+    // Get known medicine names from the database.
+    const [databaseNames] = await db.query(`
+        SELECT medicine_name AS name
+        FROM medicines
+        WHERE medicine_name IS NOT NULL
+        AND TRIM(medicine_name) <> ''
+
+        UNION
+
+        SELECT brand_name AS name
+        FROM brands
+        WHERE brand_name IS NOT NULL
+        AND TRIM(brand_name) <> ''
+
+        UNION
+
+        SELECT other_name AS name
+        FROM substance_names
+        WHERE other_name IS NOT NULL
+        AND TRIM(other_name) <> ''
+
+        UNION
+
+        SELECT sub_chemical_name AS name
+        FROM sub_chemical_names
+        WHERE sub_chemical_name IS NOT NULL
+        AND TRIM(sub_chemical_name) <> ''
+    `);
+
+    // Prepare database names for comparison.
+    const knownNames = databaseNames
+        .map(function(item) {
+            return {
+                name: String(item.name).trim(),
+                normalized: normalizeMedicineName(item.name)
+            };
+        })
+        .filter(function(item) {
+            return item.normalized.length >= 4;
+        });
+
+    // Store possible medicine matches.
+    const matches = new Map();
+
+    // Examine each OCR line.
+    lines.forEach(function(line) {
+
+        const originalText = String(line.text || "")
             .replace(/\s+/g, " ")
             .trim();
 
-        // Remove common medicine packaging words
-        name = name.replace(
-            /\b(tablets?|capsules?|syrup|oral|solution|mg|mcg|ml)\b/gi,
-            ""
-        );
+        const normalizedLine = normalizeMedicineName(originalText);
 
-        // Remove dosage numbers
-        name = name.replace(/\b\d+(\.\d+)?\b/g, "");
+        const lineConfidence = Number(line.confidence) || 0;
 
-        name = name.replace(/[^a-zA-Z\s-]/g, "").trim();
+        if (!normalizedLine || lineConfidence < 40) {
+            return;
+        }
 
-        return {
-            name: name,
-            confidence: Number(line.confidence) || 0
-        };
+        // Compare OCR text against database names.
+        knownNames.forEach(function(known) {
 
+            const medicineName = known.name;
+            const normalizedName = known.normalized;
+
+            let matchType = "";
+            let score = 0;
+
+            // Exact match is the strongest match.
+            if (normalizedLine === normalizedName) {
+                matchType = "Exact match";
+                score = 100;
+            }
+
+            // Check whether the medicine name appears
+            // inside the extracted OCR line.
+            else if (
+                normalizedName.length >= 5 &&
+                normalizedLine.includes(normalizedName)
+            ) {
+                matchType = "Text match";
+                score = 80;
+            }
+
+            if (!matchType) {
+                return;
+            }
+
+            // Add OCR confidence to the match score.
+            score += lineConfidence * 0.2;
+
+            // Avoid duplicate medicine suggestions.
+            const key = normalizeMedicineName(medicineName);
+            const existing = matches.get(key);
+
+            if (!existing || score > existing.score) {
+                matches.set(key, {
+                    name: medicineName,
+                    score: Math.round(score),
+                    ocrConfidence: Math.round(lineConfidence),
+                    matchType: matchType
+                });
+            }
+        });
     });
 
-    // Remove lines that are unlikely to contain a medicine name
-    const validNames = candidates.filter(function(item) {
+    // Sort matches from strongest to weakest.
+    const candidates = Array.from(matches.values())
+        .sort(function(a, b) {
+            return b.score - a.score;
+        })
+        .slice(0, 5);
 
-        return (
-            item.name.length >= 3 &&
-            item.name.length <= 35 &&
-            item.name.split(" ").length <= 4 &&
-            /[a-zA-Z]{3,}/.test(item.name)
-        );
-
-    });
-
-    // Choose the line with the highest recognition confidence
-    validNames.sort(function(a, b) {
-        return b.confidence - a.confidence;
-    });
-
-    return validNames.length > 0
-        ? validNames[0].name
+    // Suggest the strongest database match.
+    const suggestedName = candidates.length > 0
+        ? candidates[0].name
         : "";
 
+    return {
+        suggestedName: suggestedName,
+        candidates: candidates
+    };
 }
-
 
 // MEDICINE IMAGE TEXT RECOGNITION (OCR)
 
@@ -201,7 +281,6 @@ app.post("/ocr", upload.single("medicineImage"), async function(req, res) {
     let worker;
 
     try {
-
         worker = await createWorker("eng");
 
         // Tell Tesseract to read text arranged in a block
@@ -234,20 +313,25 @@ app.post("/ocr", upload.single("medicineImage"), async function(req, res) {
             });
         }
 
-        // Find a possible medicine name
-        const suggestedName = findMedicineName(
+        // Find possible medicine names using the database
+        const identification = await findMedicineName(
             result.data.lines || []
         );
+
+        const suggestedName = identification.suggestedName;
+
+        console.log("Suggested medicine:", suggestedName);
+        console.log("Medicine candidates:", identification.candidates);
 
         res.json({
             success: true,
             extractedText: text,
             suggestedName: suggestedName,
+            candidates: identification.candidates,
             confidence: confidence
         });
 
     } catch (error) {
-
         console.error("OCR error:", error);
 
         res.status(500).json({
@@ -256,26 +340,24 @@ app.post("/ocr", upload.single("medicineImage"), async function(req, res) {
         });
 
     } finally {
-
         if (worker) {
             await worker.terminate();
         }
-
     }
-
 });
 
-
+// CHECK DATABASE CONNECTION
 db.getConnection()
-  .then(connection => {
-    console.log("MySQL database connected!");
-    connection.release();
-  })
-  .catch(error => {
-    console.error("Database connection failed:", error);
-  });
+    .then(connection => {
+        console.log("MySQL database connected!");
+        connection.release();
+    })
+    .catch(error => {
+        console.error("Database connection failed:", error);
+    });
 
-    app.get("/search", async function (req, res) {
+
+app.get("/search", async function (req, res) {
 
     const medicine = req.query.medicine;
     const sport = req.query.sport;
@@ -283,10 +365,10 @@ db.getConnection()
     console.log({ medicine, sport, country });
 
     if (!medicine || !sport || !country) {
-    return res.status(400).json({
-        error: "Medicine, sport and country are required"
-    });
-}
+        return res.status(400).json({
+            error: "Medicine, sport and country are required"
+        });
+    }
 
     try {
        const [results] = await db.query(`
@@ -587,5 +669,5 @@ GROUP BY
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
