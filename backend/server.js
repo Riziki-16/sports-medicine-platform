@@ -11,8 +11,13 @@ const { createWorker } = require("tesseract.js");
 const app = express();
 
 app.use(cors());
+app.use(express.json());
 
-// CONFIGURE IMAGE UPLOAD FOR OCR
+const PORT = process.env.PORT || 3000;
+
+// IMAGE UPLOAD CONFIGURATION
+
+
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -27,13 +32,13 @@ const upload = multer({
     }
 });
 
-// MAKE MEDICINE IMAGES ACCESSIBLE TO THE FRONTEND
+
+// MEDICINE IMAGES
+
 app.use("/images", express.static(path.join(__dirname, "images")));
 
-// AUTOMATIC MEDICINE IMAGE SEARCH
 const imageFolder = path.join(__dirname, "images");
 
-// Convert filenames into a common format
 function normalizeImageName(name) {
     return name
         .toLowerCase()
@@ -41,7 +46,6 @@ function normalizeImageName(name) {
         .replace(/[^a-z0-9]/g, "");
 }
 
-// Find the correct medicine image
 app.get("/find-image", async function (req, res) {
 
     const medicineName = req.query.name;
@@ -55,7 +59,6 @@ app.get("/find-image", async function (req, res) {
     try {
         const files = await fs.promises.readdir(imageFolder);
 
-        // Supported image formats
         const allowedExtensions = [
             ".jpg",
             ".jpeg",
@@ -64,14 +67,12 @@ app.get("/find-image", async function (req, res) {
             ".gif"
         ];
 
-        // Ignore files that are not images
         const imageFiles = files.filter(file =>
             allowedExtensions.includes(path.extname(file).toLowerCase())
         );
 
         const searchName = normalizeImageName(medicineName);
 
-        // Handle different spellings of the same medicine
         const aliases = {
             betapyn: ["betayn"]
         };
@@ -81,7 +82,6 @@ app.get("/find-image", async function (req, res) {
             ...(aliases[searchName] || [])
         ];
 
-        // Find an image with a matching filename
         const matchedImage = imageFiles.find(file =>
             possibleNames.includes(normalizeImageName(file))
         );
@@ -107,9 +107,9 @@ app.get("/find-image", async function (req, res) {
     }
 });
 
-const PORT = process.env.PORT || 3000;
-
 // DATABASE CONNECTION
+
+
 const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -128,7 +128,8 @@ app.get("/", function (req, res) {
     res.send("Sports Medicine API is running!");
 });
 
-// NORMALIZE MEDICINE NAMES
+
+// OCR TEXT NORMALIZATION
 
 
 function normalizeMedicineName(name) {
@@ -137,299 +138,288 @@ function normalizeMedicineName(name) {
         .replace(/[^a-z0-9]/g, "");
 }
 
-console.log("FULL OCR TEXT:", result.data.text);
 
-console.log(
-    "OCR INDIVIDUAL LINES:",
-    (result.data.lines || []).map(line => line.text)
-);
+// LEVENSHTEIN DISTANCE
+// Used to identify possible OCR spelling errors
 
-// IDENTIFY MEDICINE USING DATABASE
+function levenshteinDistance(a, b) {
 
-async function findMedicineName(lines) {
+    const matrix = [];
 
-    // Get medicine names from all four database tables.
-    const [databaseNames] = await db.query(`
-        SELECT medicine_name AS name FROM medicines
-        WHERE medicine_name IS NOT NULL AND TRIM(medicine_name) <> ''
-
-        UNION
-
-        SELECT brand_name AS name FROM brands
-        WHERE brand_name IS NOT NULL AND TRIM(brand_name) <> ''
-
-        UNION
-
-        SELECT other_name AS name FROM substance_names
-        WHERE other_name IS NOT NULL AND TRIM(other_name) <> ''
-
-        UNION
-
-        SELECT sub_chemical_name AS name FROM sub_chemical_names
-        WHERE sub_chemical_name IS NOT NULL AND TRIM(sub_chemical_name) <> ''
-    `);
-
-    const knownNames = databaseNames
-        .map(item => ({
-            name: String(item.name).trim(),
-            normalized: normalizeMedicineName(item.name)
-        }))
-        .filter(item => item.normalized.length >= 4);
-    console.log(
-        "TRUMOL DATABASE CHECK:", knownNames.filter(item => item.normalized === "trumol")
-    );
-
-    // Calculate spelling differences.
-    function levenshteinDistance(a, b) {
-
-        const matrix = Array.from(
-            { length: b.length + 1 },
-            () => []
-        );
-
-        for (let i = 0; i <= b.length; i++) {
-            matrix[i][0] = i;
-        }
-
-        for (let j = 0; j <= a.length; j++) {
-            matrix[0][j] = j;
-        }
-
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-
-                const cost = a[j - 1] === b[i - 1] ? 0 : 1;
-
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j] + 1,
-                    matrix[i][j - 1] + 1,
-                    matrix[i - 1][j - 1] + cost
-                );
-            }
-        }
-
-        return matrix[b.length][a.length];
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
     }
 
-    const matches = new Map();
-    console.log("DATABASE MEDICINE NAMES:", knownNames.filter(item =>
-    item.normalized.includes("trumol")
-));
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
 
-    console.log("OCR LINES:", lines.map(line => line.text));
-    
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
 
-    // Examine every OCR line.
-    lines.forEach(line => {
-
-        const originalText = String(line.text || "")
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, " ")
-            .trim();
-
-        const lineConfidence = Number(line.confidence) || 0;
-
-        if (!originalText) return;
-
-        const words = originalText.split(/\s+/);
-
-        // Create individual words and groups of up to four words.
-        const textParts = new Set();
-
-        words.forEach(word => {
-            if (word.length >= 4) {
-                textParts.add(normalizeMedicineName(word));
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
             }
-        });
+        }
+    }
 
-        for (let size = 2; size <= 4; size++) {
+    return matrix[b.length][a.length];
+}
 
-            for (let i = 0; i <= words.length - size; i++) {
+// FIND MEDICINE NAME FROM OCR TEXT
+// Checks medicines, brands and alternative names
 
-                const part = words.slice(i, i + size).join("");
 
-                textParts.add(normalizeMedicineName(part));
+async function findMedicineName(ocrText, lines) {
+
+    // Get medicine names from all relevant database tables
+    const [knownNames] = await db.query(`
+
+        SELECT medicine_name AS name, 'medicine' AS source
+        FROM medicines
+        WHERE medicine_name IS NOT NULL
+          AND TRIM(medicine_name) <> ''
+
+        UNION ALL
+
+        SELECT brand_name AS name, 'brand' AS source
+        FROM brands
+        WHERE brand_name IS NOT NULL
+          AND TRIM(brand_name) <> ''
+
+        UNION ALL
+
+        SELECT other_name AS name, 'substance name' AS source
+        FROM substance_names
+        WHERE other_name IS NOT NULL
+          AND TRIM(other_name) <> ''
+
+        UNION ALL
+
+        SELECT sub_chemical_name AS name, 'sub-chemical name' AS source
+        FROM sub_chemical_names
+        WHERE sub_chemical_name IS NOT NULL
+          AND TRIM(sub_chemical_name) <> ''
+
+    `);
+
+    // Combine the full OCR text and individual lines
+    const lineText = (lines || [])
+        .map(line => line.text || "")
+        .join(" ");
+
+    const fullText = `${ocrText || ""} ${lineText}`;
+
+    const normalizedText = normalizeMedicineName(fullText);
+
+    console.log("FULL OCR TEXT:", fullText);
+
+    console.log(
+        "TRUMOL DATABASE CHECK:",
+        knownNames.filter(item =>
+            normalizeMedicineName(item.name) === "trumol"
+        )
+    );
+
+    // Remove duplicate names
+    const uniqueNames = new Map();
+
+    knownNames.forEach(item => {
+
+        const originalName = String(item.name || "").trim();
+        const normalizedName = normalizeMedicineName(originalName);
+
+        if (normalizedName.length >= 3) {
+
+            if (!uniqueNames.has(normalizedName)) {
+                uniqueNames.set(normalizedName, {
+                    name: originalName,
+                    normalized: normalizedName,
+                    source: item.source
+                });
+            }
+        }
+    });
+
+    const exactMatches = [];
+    const possibleMatches = [];
+
+    // Check every database name against the OCR text
+    for (const item of uniqueNames.values()) {
+
+        const normalizedName = item.normalized;
+
+        // Exact name found in OCR text
+        if (normalizedText.includes(normalizedName)) {
+
+            exactMatches.push({
+                name: item.name,
+                source: item.source,
+                score: 100
+            });
+
+            continue;
+        }
+
+        // Check individual OCR words and nearby word groups
+        const words = fullText
+            .toLowerCase()
+            .match(/[a-z0-9]+/g) || [];
+
+        let closestDistance = Infinity;
+
+        for (let i = 0; i < words.length; i++) {
+
+            for (let size = 1; size <= 4 && i + size <= words.length; size++) {
+
+                const phrase = words.slice(i, i + size).join("");
+                const distance = levenshteinDistance(
+                    normalizedName,
+                    phrase
+                );
+
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                }
             }
         }
 
-        // Compare possible OCR words with database names.
-        knownNames.forEach(known => {
+        // Only show close matches as candidates.
+        // Do not automatically treat them as confirmed medicines.
+        const allowedErrors = normalizedName.length >= 8 ? 2 : 1;
 
-            let bestScore = 0;
-            let matchType = "";
+        if (
+            closestDistance > 0 &&
+            closestDistance <= allowedErrors
+        ) {
 
-            textParts.forEach(part => {
-
-                if (!part) return;
-
-                if (part === known.normalized) {
-
-                    bestScore = 100;
-                    matchType = "Exact match";
-
-                    return;
-                }
-
-                // Allow the medicine name to appear within a longer OCR word.
-                if (
-                    part.length >= known.normalized.length &&
-                    part.includes(known.normalized)
-                ) {
-
-                    if (90 > bestScore) {
-                        bestScore = 90;
-                        matchType = "Text match";
-                    }
-
-                    return;
-                }
-
-                // Allow small spelling differences.
-                const lengthDifference = Math.abs(
-                    part.length - known.normalized.length
-                );
-
-                if (
-                    known.normalized.length >= 5 &&
-                    part.length >= 5 &&
-                    lengthDifference <= 2
-                ) {
-
-                    const distance = levenshteinDistance(
-                        part,
-                        known.normalized
-                    );
-
-                    const allowedErrors =
-                        known.normalized.length >= 9 ? 2 : 1;
-
-                    if (distance <= allowedErrors) {
-
-                        const score = 75 - distance * 10;
-
-                        if (score > bestScore) {
-                            bestScore = score;
-                            matchType = "Close match";
-                        }
-                    }
-                }
+            possibleMatches.push({
+                name: item.name,
+                source: item.source,
+                score: Math.max(
+                    0,
+                    Math.round(
+                        100 - (closestDistance / normalizedName.length) * 100
+                    )
+                )
             });
+        }
+    }
 
-            if (!matchType) return;
+    // Remove duplicate exact matches
+    const uniqueExactMatches = [
+        ...new Map(
+            exactMatches.map(item => [
+                normalizeMedicineName(item.name),
+                item
+            ])
+        ).values()
+    ];
 
-            const finalScore = Math.round(
-                bestScore + (lineConfidence * 0.2)
-            );
+    // Sort possible matches by similarity
+    possibleMatches.sort((a, b) => b.score - a.score);
 
-            const key = known.normalized;
-            const existing = matches.get(key);
-
-            if (!existing || finalScore > existing.score) {
-
-                matches.set(key, {
-                    name: known.name,
-                    score: finalScore,
-                    ocrConfidence: Math.round(lineConfidence),
-                    matchType: matchType
-                });
-            }
-        });
-    });
-
-    const candidates = Array.from(matches.values())
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5);
-
-    // Do not automatically trust a weak or ambiguous match.
-    const suggestedName =
-        candidates.length > 0 && candidates[0].score >= 75
-            ? candidates[0].name
-            : "";
-
-    console.log("OCR matching candidates:", candidates);
+    // Only return a suggested name when an exact match exists
+    const suggestedName = uniqueExactMatches.length > 0
+        ? uniqueExactMatches[0].name
+        : "";
 
     return {
-        suggestedName,
-        candidates
+        suggestedName: suggestedName,
+        candidates: [
+            ...uniqueExactMatches,
+            ...possibleMatches
+        ].slice(0, 5)
     };
 }
 
-
 // MEDICINE IMAGE TEXT RECOGNITION (OCR)
 
-app.post("/ocr", upload.single("medicineImage"), async function(req, res) {
 
-    if (!req.file) {
-        return res.status(400).json({
-            success: false,
-            error: "Please capture a medicine image."
-        });
-    }
+app.post("/ocr", upload.single("medicineImage"), async function (req, res) {
 
     let worker;
 
     try {
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: "Please capture a medicine image."
+            });
+        }
+
+        console.log("Starting OCR recognition...");
+
         worker = await createWorker("eng");
 
-        // Tell Tesseract to read text arranged in a block
         await worker.setParameters({
             tessedit_pageseg_mode: "6",
             preserve_interword_spaces: "1"
         });
 
-        // Read the uploaded medicine image
+        // Read uploaded image
         const result = await worker.recognize(req.file.buffer);
 
-        const text = result.data.text.trim();
-        const confidence = result.data.confidence;
+        const text = String(result.data.text || "").trim();
+        const confidence = Number(result.data.confidence) || 0;
+        const lines = result.data.lines || [];
 
-        console.log("OCR extracted text:", text);
-        console.log("OCR confidence:", confidence);
+        console.log("OCR EXTRACTED TEXT:", text);
+        console.log("OCR CONFIDENCE:", confidence);
+
+        console.log(
+            "OCR INDIVIDUAL LINES:",
+            lines.map(line => line.text)
+        );
 
         if (!text) {
-            return res.status(400).json({
+            return res.status(422).json({
                 success: false,
-                error: "No readable text found. Please take a clearer picture."
+                error: "No readable text found. Please take another picture."
             });
         }
 
-       // Log OCR confidence but allow medicine identification to continue
-        console.log("OCR confidence:", confidence);
+        // Find possible medicine names using the complete OCR text
+        const identification = await findMedicineName(text, lines);
 
-        // Find possible medicine names using the database
-        const identification = await findMedicineName(
-            result.data.lines || []
-        );
+        console.log("OCR MEDICINE IDENTIFICATION:", identification);
 
-        const suggestedName = identification.suggestedName;
-
-        console.log("Suggested medicine:", suggestedName);
-        console.log("Medicine candidates:", identification.candidates);
-
-        res.json({
+        return res.json({
             success: true,
             extractedText: text,
-            suggestedName: suggestedName,
+            suggestedName: identification.suggestedName,
             candidates: identification.candidates,
             confidence: confidence
         });
 
     } catch (error) {
-        console.error("OCR error:", error);
 
-        res.status(500).json({
+        console.error("OCR ERROR:", error);
+
+        return res.status(500).json({
             success: false,
             error: "Unable to read medicine image."
         });
 
     } finally {
+
         if (worker) {
             await worker.terminate();
         }
     }
 });
 
-// CHECK DATABASE CONNECTION
+
+// DATABASE CONNECTION TEST
+
+
 db.getConnection()
     .then(connection => {
         console.log("MySQL database connected!");
@@ -440,11 +430,15 @@ db.getConnection()
     });
 
 
+// MEDICINE SEARCH
+
+
 app.get("/search", async function (req, res) {
 
     const medicine = req.query.medicine;
     const sport = req.query.sport;
     const country = req.query.country;
+
     console.log({ medicine, sport, country });
 
     if (!medicine || !sport || !country) {
@@ -454,13 +448,14 @@ app.get("/search", async function (req, res) {
     }
 
     try {
-       const [results] = await db.query(`
+
+        const [results] = await db.query(`
+
     SELECT
-    
+
 COALESCE(
     NULLIF(TRIM(m.medicine_name), ''),
 
-    -- Use the sub-chemical linked to the searched brand
     (
         SELECT MIN(TRIM(scn2.sub_chemical_name))
         FROM brands b2
@@ -472,7 +467,6 @@ COALESCE(
           AND b2.substance_id = s.substance_id
     ),
 
-    -- Preserve the existing fallback for other searches
     (
         SELECT MIN(TRIM(scn2.sub_chemical_name))
         FROM sub_chemical_names scn2
@@ -491,6 +485,7 @@ COALESCE(
 TRIM(s.chemical_name) AS ingredient,
 m.medicine_name AS medicine_name,
 cat.category_name AS category,
+
 (
     CASE
         WHEN EXISTS (
@@ -521,9 +516,11 @@ cat.category_name AS category,
         )
     END
 ) AS sub_chemical_name,
+
 sf.specific_code AS specific_code,
 sf.specific_name AS specific_name,
-   (
+
+(
     CASE
         WHEN EXISTS (
             SELECT 1
@@ -566,7 +563,8 @@ sf.specific_name AS specific_name,
         )
     END
 ) AS other_names,
-   (
+
+(
     SELECT GROUP_CONCAT(
         DISTINCT bg.brand_name
         ORDER BY bg.brand_name
@@ -585,7 +583,7 @@ sf.specific_name AS specific_name,
         )
 ) AS brand_names,
 
-    (
+(
     SELECT JSON_ARRAYAGG(
         JSON_OBJECT(
             'brand_id', b2.brand_id,
@@ -607,14 +605,17 @@ sf.specific_name AS specific_name,
             )
         )
 ) AS brands,
-    sp.sports_name AS sport,
-    c.country_name AS country,
-   CASE
+
+sp.sports_name AS sport,
+c.country_name AS country,
+
+CASE
     WHEN s.category_id IS NOT NULL THEN 'Restricted'
     ELSE COALESCE(r.status, 'Not classified')
 END AS status,
-    d.dosage_information AS dosage,
-    w.warning_information AS warning,
+
+d.dosage_information AS dosage,
+w.warning_information AS warning,
 
 (
     SELECT GROUP_CONCAT(
@@ -625,8 +626,9 @@ END AS status,
     WHERE mp.substance_id = s.substance_id
 ) AS monitoring_program
 
-    FROM substances s
-    LEFT JOIN categories cat
+FROM substances s
+
+LEFT JOIN categories cat
     ON cat.category_id = s.category_id
 
 LEFT JOIN specifics sf
@@ -638,38 +640,37 @@ LEFT JOIN medicine_substances ms
 LEFT JOIN medicines m
     ON ms.medicine_id = m.medicine_id
 
-    LEFT JOIN substance_names sn
-        ON s.substance_id = sn.substance_id
+LEFT JOIN substance_names sn
+    ON s.substance_id = sn.substance_id
 
-        LEFT JOIN sub_chemical_names scn
+LEFT JOIN sub_chemical_names scn
     ON s.substance_id = scn.substance_id
 
-    LEFT JOIN dosages d
-        ON s.substance_id = d.substance_id
+LEFT JOIN dosages d
+    ON s.substance_id = d.substance_id
 
-    LEFT JOIN warnings w
-        ON w.substance_id = s.substance_id
+LEFT JOIN warnings w
+    ON w.substance_id = s.substance_id
 
-    LEFT JOIN restriction_rules r
-        ON s.substance_id = r.substance_id
-        AND r.sports_id = (
-            SELECT sports_id
-            FROM sports
-            WHERE sports_name = ?
-        )
-        AND r.country_id = (
-            SELECT country_id
-            FROM countries
-            WHERE country_name = ?
-        )
+LEFT JOIN restriction_rules r
+    ON s.substance_id = r.substance_id
+    AND r.sports_id = (
+        SELECT sports_id
+        FROM sports
+        WHERE sports_name = ?
+    )
+    AND r.country_id = (
+        SELECT country_id
+        FROM countries
+        WHERE country_name = ?
+    )
 
-    LEFT JOIN sports sp
-        ON r.sports_id = sp.sports_id
+LEFT JOIN sports sp
+    ON r.sports_id = sp.sports_id
 
-    LEFT JOIN countries c
-        ON r.country_id = c.country_id
+LEFT JOIN countries c
+    ON r.country_id = c.country_id
 
-  
 WHERE
 (
     (
@@ -729,27 +730,55 @@ GROUP BY
     r.status,
     d.dosage_information,
     w.warning_information
-`, [
-     medicine,
-    medicine, medicine, medicine, medicine,
-    sport, country,
-    medicine, medicine, medicine,
-    medicine, medicine, medicine,
-    medicine, medicine, medicine
-]);
 
-       res.json({
-    totalResults: results.length,
-    results: results
-});
+`, [
+            medicine,
+            medicine, medicine, medicine, medicine,
+            sport, country,
+            medicine, medicine, medicine,
+            medicine, medicine, medicine,
+            medicine, medicine, medicine
+        ]);
+
+        res.json({
+            totalResults: results.length,
+            results: results
+        });
 
     } catch (error) {
-        console.error(error);
+
+        console.error("Database search error:", error);
+
         res.status(500).json({
             error: "Database search failed"
         });
     }
 });
+
+
+// ERROR HANDLER
+
+
+app.use(function (error, req, res, next) {
+
+    console.error("Server error:", error);
+
+    if (error instanceof multer.MulterError) {
+        return res.status(400).json({
+            success: false,
+            error: "Image upload failed. Please use an image under 5MB."
+        });
+    }
+
+    res.status(400).json({
+        success: false,
+        error: error.message || "Something went wrong."
+    });
+});
+
+
+// START SERVER
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
