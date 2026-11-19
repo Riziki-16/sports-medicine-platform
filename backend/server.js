@@ -140,7 +140,6 @@ function normalizeMedicineName(name) {
 
 // IDENTIFY MEDICINE USING DATABASE
 
-
 async function findMedicineName(lines) {
 
     // Get known medicine names from the database.
@@ -172,7 +171,7 @@ async function findMedicineName(lines) {
         AND TRIM(sub_chemical_name) <> ''
     `);
 
-    // Prepare database names for comparison.
+    // Normalize medicine names.
     const knownNames = databaseNames
         .map(function(item) {
             return {
@@ -183,6 +182,35 @@ async function findMedicineName(lines) {
         .filter(function(item) {
             return item.normalized.length >= 4;
         });
+
+    // Calculate the difference between two strings.
+    function levenshteinDistance(a, b) {
+
+        const matrix = [];
+
+        for (let i = 0; i <= b.length; i++) {
+            matrix[i] = [i];
+        }
+
+        for (let j = 0; j <= a.length; j++) {
+            matrix[0][j] = j;
+        }
+
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+
+                const cost = a[j - 1] === b[i - 1] ? 0 : 1;
+
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j - 1] + cost
+                );
+            }
+        }
+
+        return matrix[b.length][a.length];
+    }
 
     // Store possible medicine matches.
     const matches = new Map();
@@ -198,9 +226,31 @@ async function findMedicineName(lines) {
 
         const lineConfidence = Number(line.confidence) || 0;
 
-        if (!normalizedLine || lineConfidence < 40) {
+        if (!normalizedLine) {
             return;
         }
+
+        // Break OCR text into individual words.
+        const words = originalText
+            .toLowerCase()
+            .match(/[a-z0-9]+/g) || [];
+
+        // Create groups of consecutive words.
+        const textParts = [normalizedLine];
+
+        for (let size = 1; size <= 4; size++) {
+
+            for (let i = 0; i <= words.length - size; i++) {
+
+                const part = words
+                    .slice(i, i + size)
+                    .join("");
+
+                textParts.push(normalizeMedicineName(part));
+            }
+        }
+
+        const uniqueParts = [...new Set(textParts)];
 
         // Compare OCR text against database names.
         knownNames.forEach(function(known) {
@@ -209,41 +259,85 @@ async function findMedicineName(lines) {
             const normalizedName = known.normalized;
 
             let matchType = "";
-            let score = 0;
+            let bestScore = 0;
 
-            // Exact match is the strongest match.
-            if (normalizedLine === normalizedName) {
-                matchType = "Exact match";
-                score = 100;
-            }
+            uniqueParts.forEach(function(part) {
 
-            // Check whether the medicine name appears
-            // inside the extracted OCR line.
-            else if (
-                normalizedName.length >= 5 &&
-                normalizedLine.includes(normalizedName)
-            ) {
-                matchType = "Text match";
-                score = 80;
-            }
+                if (!part) return;
 
-            if (!matchType) {
-                return;
-            }
+                let currentType = "";
+                let currentScore = 0;
 
-            // Add OCR confidence to the match score.
-            score += lineConfidence * 0.2;
+                // Exact match.
+                if (part === normalizedName) {
+
+                    currentType = "Exact match";
+                    currentScore = 100;
+
+                }
+
+                // Medicine name found inside a longer OCR line.
+                else if (
+                    normalizedName.length >= 5 &&
+                    normalizedLine.includes(normalizedName)
+                ) {
+
+                    currentType = "Text match";
+                    currentScore = 90;
+
+                }
+
+                // Check for small OCR spelling mistakes.
+                else if (
+                    normalizedName.length >= 5 &&
+                    part.length >= 5
+                ) {
+
+                    const distance = levenshteinDistance(
+                        part,
+                        normalizedName
+                    );
+
+                    const allowedErrors =
+                        normalizedName.length >= 9 ? 2 : 1;
+
+                    if (distance <= allowedErrors) {
+
+                        currentType = "Close match";
+
+                        currentScore = 75 -
+                            (distance * 10);
+
+                    }
+                }
+
+                if (currentScore > bestScore) {
+                    bestScore = currentScore;
+                    matchType = currentType;
+                }
+            });
+
+            if (!matchType) return;
+
+            // Include OCR confidence in the final score.
+            const score = bestScore + (lineConfidence * 0.2);
 
             // Avoid duplicate medicine suggestions.
             const key = normalizeMedicineName(medicineName);
             const existing = matches.get(key);
 
             if (!existing || score > existing.score) {
+
                 matches.set(key, {
+
                     name: medicineName,
+
                     score: Math.round(score),
+
                     ocrConfidence: Math.round(lineConfidence),
+
                     matchType: matchType
+
                 });
             }
         });
@@ -266,6 +360,7 @@ async function findMedicineName(lines) {
         candidates: candidates
     };
 }
+
 
 // MEDICINE IMAGE TEXT RECOGNITION (OCR)
 
