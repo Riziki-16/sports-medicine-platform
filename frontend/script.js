@@ -4,44 +4,38 @@ const userType = document.getElementById("userType");
 const results = document.getElementById("results");
 
 
-// When the Search button is clicked
+// SEARCH FOR MEDICINE
+
 form.addEventListener("submit", async function(event) {
 
     event.preventDefault();
 
-    // Get the information entered by the user
     const medicine = search.value.trim();
     const userTypeValue = userType.value;
     const sport = document.getElementById("sport").value;
     const country = document.getElementById("country").value;
 
-
-    // Make sure the user entered a medicine
     if (medicine === "") {
         alert("Please enter a medicine or substance.");
         return;
     }
 
-
     try {
 
-        // Send the information to the backend
-  // Send the information to the backend
-const response = await fetch(
-    `https://clean-sport-kenya-api.onrender.com/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
-);
+        const response = await fetch(
+            `https://clean-sport-kenya-api.onrender.com/search?medicine=${encodeURIComponent(medicine)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}&userType=${encodeURIComponent(userTypeValue)}`
+        );
 
-        // Convert the response into JSON
         const data = await response.json();
 
         console.log("Search results:", data);
 
+        if (!response.ok) {
+            throw new Error(data.error || "Medicine search failed.");
+        }
 
-        // Get the results from the backend
         const medicineResults = data.results || [];
 
-
-        // If there are no results
         if (medicineResults.length === 0) {
 
             results.innerHTML = `
@@ -52,8 +46,6 @@ const response = await fetch(
             return;
         }
 
-
-        // Start displaying the results
         let output = `
             <p>
                 <strong>Total Results:</strong>
@@ -67,74 +59,55 @@ const response = await fetch(
                 </div>
         `;
 
+        const displayedFormulations = new Set();
+        let formulationIndex = 0;
 
-        // Display every medicine found
-      
-//
-// Display each formulation only once
+        const originalSearchTerm = medicine.toLowerCase();
 
-// Display each formulation only once
-const displayedFormulations = new Set();
-let formulationIndex = 0;
+        medicineResults.forEach(function(result) {
 
-// Preserve the original search term
-const originalSearchTerm = String(medicine).trim().toLowerCase();
+            const name =
+                result.medicine_name ||
+                result.ingredient ||
+                result.search_for;
 
-medicineResults.forEach(function(result) {
+            if (!name || displayedFormulations.has(name)) {
+                return;
+            }
 
-    const name =
-        result.medicine_name ||
-        result.ingredient ||
-        result.search_for;
+            displayedFormulations.add(name);
+            formulationIndex++;
 
-    // Skip duplicate formulations
-    if (!name || displayedFormulations.has(name)) {
-        return;
-    }
+            const brandNames = typeof result.brand_names === "string"
+                ? result.brand_names.split(",").map(n => n.trim())
+                : [];
 
-    displayedFormulations.add(name);
-    formulationIndex++;
+            const otherNamesList = typeof result.other_names === "string"
+                ? result.other_names.split(",").map(n => n.trim())
+                : [];
 
-    // Get brand names
-    const brandNames = typeof result.brand_names === "string"
-        ? result.brand_names.split(",").map(n => n.trim())
-        : [];
+            const allNames = [...brandNames, ...otherNamesList];
 
-    // Get alternative names
-    const otherNamesList = typeof result.other_names === "string"
-        ? result.other_names.split(",").map(n => n.trim())
-        : [];
+            const matchedName = allNames.find(
+                n => n.toLowerCase() === originalSearchTerm
+            );
 
-    // Check BOTH lists for the original search term
-    const allNames = [...brandNames, ...otherNamesList];
+            const detailIngredient = matchedName || name;
 
-    const matchedName = allNames.find(
-        n => n.toLowerCase() === originalSearchTerm
-    );
+            output += `
+                <a
+                    class="formulation-item"
+                    href="detail.html?ingredient=${encodeURIComponent(detailIngredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}"
+                >
+                    ${formulationIndex}. ${name}
+                </a>
+            `;
 
-    // Preserve the exact searched name when it matches
-    const detailIngredient = matchedName || name;
+        });
 
-    output += `
-        <a
-            class="formulation-item"
-            href="detail.html?ingredient=${encodeURIComponent(detailIngredient)}&sport=${encodeURIComponent(sport)}&country=${encodeURIComponent(country)}"
-        >
-            ${formulationIndex}. ${name}
-        </a>
-    `;
-});
+        output += `</div>`;
 
-
-        // Close the results list
-        output += `
-            </div>
-        `;
-
-
-        // Put the results on the page
         results.innerHTML = output;
-
 
     } catch (error) {
 
@@ -153,6 +126,8 @@ medicineResults.forEach(function(result) {
 });
 
 
+// CAMERA AND SCANNER
+
 const openScanner = document.getElementById("openScanner");
 const closeScanner = document.getElementById("closeScanner");
 const scannerModal = document.getElementById("scannerModal");
@@ -165,45 +140,92 @@ const cameraVideo = document.getElementById("cameraVideo");
 
 let camera;
 
-// Open scanner
-openScanner.onclick = () => scannerModal.hidden = false;
 
-// Stop camera
+// OPEN SCANNER
+
+openScanner.onclick = function() {
+
+    scannerModal.hidden = false;
+
+};
+
+
+// STOP CAMERA
+
 function stopCamera() {
+
     if (camera) {
-        camera.getTracks().forEach(track => track.stop());
+
+        camera.getTracks().forEach(function(track) {
+            track.stop();
+        });
+
         camera = null;
+
     }
 
     cameraVideo.srcObject = null;
     cameraPanel.hidden = true;
+
 }
 
-// Close scanner
-closeScanner.onclick = () => {
+
+// CLOSE SCANNER
+
+closeScanner.onclick = function() {
+
     stopCamera();
     scannerModal.hidden = true;
+
 };
 
 
- // Open phone camera or computer webcam
-takePicture.onclick = async function () {
+// OPEN PHONE CAMERA OR COMPUTER WEBCAM
+
+takePicture.onclick = async function() {
 
     try {
 
         stopCamera();
 
         camera = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" },
+
+            video: {
+                facingMode: { ideal: "environment" },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            },
+
             audio: false
+
         });
+
+        // Request continuous autofocus where supported
+        const track = camera.getVideoTracks()[0];
+
+        try {
+
+            await track.applyConstraints({
+                advanced: [{ focusMode: "continuous" }]
+            });
+
+        } catch (error) {
+
+            console.log("Continuous focus is not supported.");
+
+        }
 
         cameraVideo.srcObject = camera;
         cameraPanel.hidden = false;
 
         await cameraVideo.play();
 
+        scannerStatus.textContent =
+            "Point the camera at the medicine label and allow it to focus.";
+
     } catch (error) {
+
+        console.log("Camera error:", error);
 
         scannerStatus.textContent =
             "Camera unavailable. Please allow camera access and try again.";
@@ -213,96 +235,274 @@ takePicture.onclick = async function () {
 };
 
 
- // Capture photo and read medicine text
-document.getElementById("capturePhoto").onclick = function () {
+// ENHANCE MEDICINE IMAGE BEFORE OCR
 
-    if (!camera || !cameraVideo.videoWidth) return;
+function enhanceImage(originalCanvas) {
+
+    const canvas = document.createElement("canvas");
+
+    // Resize the image without making it excessively large
+    const scale = Math.min(
+        1.5,
+        1600 / Math.max(originalCanvas.width, originalCanvas.height)
+    );
+
+    canvas.width = Math.round(originalCanvas.width * scale);
+    canvas.height = Math.round(originalCanvas.height * scale);
+
+    const context = canvas.getContext("2d", {
+        willReadFrequently: true
+    });
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+
+    // Draw and enlarge the original image
+    context.drawImage(
+        originalCanvas,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    // Read the image pixels
+    const imageData = context.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const pixels = imageData.data;
+
+    // Convert the image to grayscale and improve contrast
+    for (let i = 0; i < pixels.length; i += 4) {
+
+        let gray =
+            0.299 * pixels[i] +
+            0.587 * pixels[i + 1] +
+            0.114 * pixels[i + 2];
+
+        gray = (gray - 128) * 1.4 + 133;
+
+        gray = Math.max(0, Math.min(255, gray));
+
+        pixels[i] = gray;
+        pixels[i + 1] = gray;
+        pixels[i + 2] = gray;
+
+    }
+
+    // Save the image before sharpening
+    const originalPixels = new Uint8ClampedArray(pixels);
+
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Sharpen the medicine label
+    for (let y = 1; y < height - 1; y++) {
+
+        for (let x = 1; x < width - 1; x++) {
+
+            const i = (y * width + x) * 4;
+
+            const top = ((y - 1) * width + x) * 4;
+            const bottom = ((y + 1) * width + x) * 4;
+            const left = (y * width + x - 1) * 4;
+            const right = (y * width + x + 1) * 4;
+
+            const sharp =
+                originalPixels[i] * 5 -
+                originalPixels[top] -
+                originalPixels[bottom] -
+                originalPixels[left] -
+                originalPixels[right];
+
+            const value = Math.max(0, Math.min(255, sharp));
+
+            pixels[i] = value;
+            pixels[i + 1] = value;
+            pixels[i + 2] = value;
+
+        }
+
+    }
+
+    // Put the improved image back on the canvas
+    context.putImageData(imageData, 0, 0);
+
+    return canvas;
+
+}
+
+
+// CAPTURE PHOTO AND READ MEDICINE TEXT
+
+document.getElementById("capturePhoto").onclick = async function() {
+
+    if (!camera || !cameraVideo.videoWidth) {
+
+        scannerStatus.textContent =
+            "Please open the camera first.";
+
+        return;
+
+    }
 
     const canvas = document.createElement("canvas");
 
     canvas.width = cameraVideo.videoWidth;
     canvas.height = cameraVideo.videoHeight;
 
-    canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+    // Capture the original image
+    canvas.getContext("2d").drawImage(
+        cameraVideo,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-    canvas.toBlob(async function (photo) {
+    try {
 
-        if (!photo) return;
+        scannerStatus.textContent =
+            "Enhancing medicine image...";
+
+        // Improve the image before sending it to OCR
+        const enhancedCanvas = enhanceImage(canvas);
+
+        // Convert the improved image into a file
+        const photo = await new Promise(function(resolve) {
+
+            enhancedCanvas.toBlob(
+                resolve,
+                "image/jpeg",
+                0.95
+            );
+
+        });
+
+        if (!photo) {
+
+            scannerStatus.textContent =
+                "Unable to process the image.";
+
+            return;
+
+        }
+
+        // Display the enhanced image
+        if (preview.src.startsWith("blob:")) {
+            URL.revokeObjectURL(preview.src);
+        }
 
         preview.src = URL.createObjectURL(photo);
         preview.hidden = false;
 
         stopCamera();
 
-        scannerStatus.textContent = "Reading medicine text...";
+        scannerStatus.textContent =
+            "Reading enhanced medicine image. Please wait...";
 
-        try {
+        // Send the enhanced image to the backend
+        const formData = new FormData();
 
-            const formData = new FormData();
-            formData.append("medicineImage", photo);
+        formData.append(
+            "medicineImage",
+            photo,
+            "medicine.jpg"
+        );
 
-            const response = await fetch(
-                "https://clean-sport-kenya-api.onrender.com/ocr",
-                {
-                    method: "POST",
-                    body: formData
-                }
-            );
-
-            const result = await response.json();
-
-            if (result.success) {
-
-                document.getElementById("search").value =
-                    result.extractedText;
-
-                scannerStatus.textContent =
-                    "Text extracted successfully! Check the search field.";
-
-            } else {
-
-                scannerStatus.textContent =
-                    result.error || "Could not read the medicine label.";
-
+        const response = await fetch(
+            "https://clean-sport-kenya-api.onrender.com/ocr",
+            {
+                method: "POST",
+                body: formData
             }
+        );
 
-        } catch (error) {
+        const result = await response.json();
+
+        console.log("OCR response:", result);
+
+        if (!response.ok || !result.success) {
 
             scannerStatus.textContent =
-                "Unable to connect to the OCR service.";
+                result.error || "Could not read the medicine label.";
 
-            console.log(error);
+            return;
 
         }
 
-    }, "image/jpeg");
+        // Display the suggested medicine name
+        if (result.suggestedName) {
+
+            search.value = result.suggestedName;
+
+            scannerStatus.textContent =
+                "Possible medicine name: " +
+                result.suggestedName +
+                ". Please confirm before searching.";
+
+        } else {
+
+            scannerStatus.textContent =
+                "Text detected, but medicine name not identified. Please enter it manually.";
+
+            console.log(
+                "Full extracted text:",
+                result.extractedText
+            );
+
+        }
+
+    } catch (error) {
+
+        console.log("OCR error:", error);
+
+        scannerStatus.textContent =
+            "Unable to process the medicine image. Please try again.";
+
+    }
 
 };
 
 
-// Cancel camera
+// CANCEL CAMERA
+
 const stopCameraButton = document.getElementById("stopCamera");
 
 if (stopCameraButton) {
+
     stopCameraButton.onclick = stopCamera;
+
 }
 
 
-// Open medicine details when preview is clicked
-preview.onclick = () => {
-    const medicineName = document.getElementById("search").value.trim();
+// OPEN MEDICINE DETAILS WHEN PREVIEW IS CLICKED
+
+preview.onclick = function() {
+
+    const medicineName = search.value.trim();
 
     if (!medicineName) {
+
         alert("Please enter the medicine name before opening its details.");
+
         return;
+
     }
 
     const sport = document.getElementById("sport").value;
     const country = document.getElementById("country").value;
 
-    window.location.href = "detail.html?ingredient=" +
+    window.location.href =
+        "detail.html?ingredient=" +
         encodeURIComponent(medicineName) +
-        "&sport=" + encodeURIComponent(sport) +
-        "&country=" + encodeURIComponent(country);
-};
+        "&sport=" +
+        encodeURIComponent(sport) +
+        "&country=" +
+        encodeURIComponent(country);
 
+};
