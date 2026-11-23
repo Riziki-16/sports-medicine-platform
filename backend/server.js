@@ -611,6 +611,7 @@ c.country_name AS country,
 
 CASE
     WHEN s.category_id IS NOT NULL THEN 'Restricted'
+    WHEN s.substance_id BETWEEN 771 AND 778 THEN 'Restricted'
     ELSE COALESCE(r.status, 'Not classified')
 END AS status,
 
